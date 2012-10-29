@@ -12,8 +12,7 @@ YACCFLAGS = -d -y -v
 
 OBJECTS = \
 	main.o \
-	symtab.o usrdef.o shared.o rulefuncs.o error.o \
-	semantic.o \
+	symtab.o shared.o rulefuncs.o error.o
 
 
 all:    yacc lex $(OBJECTS) tests_prepare
