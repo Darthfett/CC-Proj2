@@ -149,7 +149,6 @@ program : program_heading semicolon class_list DOT
 
 program_heading : PROGRAM identifier
 	{
-	// TODO make sure that this identifier is checked against list of identifiers
 	// Change our scope to be within this program
 	if ( moveDownToNewScope($2) == NULL ) {
 		yyerror("Program Identifier has already been used");
@@ -160,7 +159,6 @@ program_heading : PROGRAM identifier
 	}
  | PROGRAM identifier LPAREN identifier_list RPAREN
 	{
-	// printf("my text = %s\n\n",text.id);
 	printf("PROGRAM identifier LPAREN identifier_list RPAREN \n");
 
 	$$ = (struct program_heading_t *) malloc(sizeof(struct program_heading_t));
@@ -171,17 +169,17 @@ program_heading : PROGRAM identifier
 
 identifier_list : identifier_list comma identifier
         {
-		printf("identifier_list : identifier_list comma identifier \n%s",yytext);
-		$$ = (struct identifier_list_t*) malloc(sizeof(struct identifier_list_t));
-		$$->next = $1;
-		$$->id = $3;
+        printf("identifier_list : identifier_list comma identifier \n%s",yytext);
+        $$ = (struct identifier_list_t*) malloc(sizeof(struct identifier_list_t));
+        $$->next = $1;
+        $$->id = $3;
         }
  | identifier
         {
-		printf("identifier_list : identifier \n");
-		$$ = (struct identifier_list_t*) malloc(sizeof(struct identifier_list_t));
-		$$->next = NULL;
-		$$->id = $1;
+        printf("identifier_list : identifier \n");
+        $$ = (struct identifier_list_t*) malloc(sizeof(struct identifier_list_t));
+        $$->next = NULL;
+        $$->id = $1;
         }
  ;
 
@@ -555,6 +553,41 @@ if_statement : IF boolean_expression THEN statement ELSE statement
         $$->e = $2;
         $$->s1 = $4;
         $$->s2 = $6;
+
+        // Build CFG
+
+        $$->cfg = (struct cfg_t*) malloc(sizeof(struct cfg_t));
+        $$->cfg->first = (struct basic_block_t*) malloc(sizeof(struct basic_block_t));
+
+        // Make the 'if' three-address code
+        struct three_addr_t *if_three_addr = (struct three_addr_t*) malloc(sizeof(struct three_addr_t));
+        $$->cfg->first->first = $$->cfg->first->last = if_three_addr;
+        $$->cfg->first->last->type = IF;
+        $$->cfg->first->last->next = NULL;
+        $$->cfg->first->last->next_b1 = $4->cfg->first;
+        $$->cfg->first->last->next_b2 = $6->cfg->first;
+
+        // Make the 'next' dummy block
+        struct basic_block_t *dummy = (struct basic_block_t*) malloc(sizeof(struct basic_block_t));
+        $4->cfg->last->last->next_b1 = dummy;
+        $6->cfg->last->last->next_b1 = dummy;
+        $$->cfg->last = dummy;
+
+        // Connect the dummy to its parents
+        struct parent_node_t *p1 = (struct parent_node_t*) malloc(sizeof(struct parent_node_t));
+        struct parent_node_t *p2 = (struct parent_node_t*) malloc(sizeof(struct parent_node_t));
+        p1->parent = $4->cfg->last;
+        p2->parent = $6->cfg->last;
+        p1->next = p2;
+        p2->next = NULL;
+        dummy->parents = p1;
+
+        // Make the dummy's noop three-address code
+        struct three_addr_t *noop = (struct three_addr_t*) malloc(sizeof(struct three_addr_t));
+        noop->type = THREE_ADDR_T_DUMMY;
+        noop->next = NULL;
+        noop->next_b1 = NULL;
+        dummy->first = dummy->last = noop;
 	}
  ;
 
@@ -565,6 +598,18 @@ assignment_statement : variable_access ASSIGNMENT expression
         $$->va = $1;
         $$->e = $3;
         $$->oe = NULL;
+        $$->cfg = (struct cfg_t*) malloc(sizeof(struct cfg_t));
+
+        struct basic_block_t *block = (struct basic_block_t*) malloc(sizeof(struct basic_block_t));
+        $$->cfg->first = $$->cfg->last = block;
+        
+        struct three_addr_t *assign = (struct three_addr_t*) malloc(sizeof(struct three_addr_t));
+        block->first = block->last = assign;
+        assign->type = THREE_ADDR_T_ASSIGN;
+        // TODO: assign->LHS = ?
+        // TODO: assign->op1 = ?
+        assign->next = NULL;
+        assign->next_b1 = NULL;
 	}
  | variable_access ASSIGNMENT object_instantiation
 	{
@@ -573,6 +618,18 @@ assignment_statement : variable_access ASSIGNMENT expression
         $$->va = $1;
         $$->e = NULL;
         $$->oe = $3;
+        $$->cfg = (struct cfg_t*) malloc(sizeof(struct cfg_t));
+
+        struct basic_block_t *block = (struct basic_block_t*) malloc(sizeof(struct basic_block_t));
+        $$->cfg->first = $$->cfg->last = block;
+        
+        struct three_addr_t *assign = (struct three_addr_t*) malloc(sizeof(struct three_addr_t));
+        block->first = block->last = assign;
+        assign->type = THREE_ADDR_T_ASSIGN;
+        // TODO: assign->LHS = ?
+        // TODO: assign->op1 = ?
+        assign->next = NULL;
+        assign->next_b1 = NULL;
 	}
  ;
 
@@ -767,7 +824,6 @@ expression : simple_expression
         $$->se1 = $1;
         $$->relop = $2;
         $$->se2 = $3;
-        // TODO - compute value and type of $$->expr
 	}
  ;
 
@@ -786,7 +842,6 @@ simple_expression : term
         $$ = (struct simple_expression_t*) malloc(sizeof(struct simple_expression_t));
         $$->t = $3;
         $$->addop = $2;
-        // TODO - compute value and type of $$->expr
         $$->next = $1;
 	}
  ;
@@ -806,7 +861,6 @@ term : factor
         $$ = (struct term_t*) malloc(sizeof(struct term_t));
         $$->f = $3;
         $$->mulop = $2;
-        // TODO - compute value and type of $$->expr
         $$->next = $1;
 	}
  ;

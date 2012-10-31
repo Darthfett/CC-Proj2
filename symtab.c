@@ -13,9 +13,6 @@
 #define SYMBOL_VARIABLE 1
 #define SYMBOL_FUNCTION 2
 
-void printTable(struct hash_table_t *table);
-
-
 struct hash_table_t* new_hash_table(int size)
 {
     struct hash_table_t *table;
@@ -167,8 +164,8 @@ void printTable(struct hash_table_t *table)
 			printf("\"%s\": ", node->key);
 			// TODO - Update value to be actual value rather than type.
 			printf("%d\n", node->value->value_type);
+                        node = node->next;
 		}
-		node = node->next;
 	}
 
 	printf("}\n");

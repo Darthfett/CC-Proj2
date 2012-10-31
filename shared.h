@@ -41,6 +41,16 @@
                                }
 
 /* ================================================================
+ * Custom structure declarations
+ * ================================================================
+ */
+
+struct parent_node_t;
+struct three_addr_t; 
+struct basic_block_t; 
+struct cfg_t; 
+
+/* ================================================================
  * Datatype declarations
  * ================================================================
  */
@@ -217,6 +227,7 @@ struct primary_t{
     }p;
   }data;
   struct expression_data_t *expr;
+  struct cfg_t *cfg;
 };
 
 #define FACTOR_T_SIGNFACTOR 1
@@ -249,6 +260,7 @@ struct simple_expression_t{
   int addop;
   struct expression_data_t *expr;
   struct simple_expression_t *next;
+  struct cfg_t *cfg;
 };
 
 struct expression_t{
@@ -256,6 +268,7 @@ struct expression_t{
   int relop;
   struct simple_expression_t *se2;
   struct expression_data_t *expr;
+  struct cfg_t *cfg;
 };
 
 struct index_expression_list_t;
@@ -312,6 +325,7 @@ struct assignment_statement_t{
   struct variable_access_t *va;
   struct expression_t *e;  
   struct object_instantiation_t *oe;
+  struct cfg_t *cfg;
 };
 
 struct statement_t;
@@ -319,20 +333,24 @@ struct if_statement_t{
   struct expression_t *e;
   struct statement_t *s1;
   struct statement_t *s2;
+  struct cfg_t *cfg;
 };
 
 struct while_statement_t{
   struct expression_t *e;
   struct statement_t *s;
+  struct cfg_t *cfg;
 };
 
 struct print_statement_t{
   struct variable_access_t *va;
+  struct cfg_t *cfg;
 };
 
 struct function_block_t{
   struct variable_declaration_list_t *vdl;
   struct statement_sequence_t *ss;
+  struct cfg_t *cfg;
 };
 
 struct statement_sequence_t;
@@ -357,11 +375,13 @@ struct statement_t {
     struct print_statement_t *ps;
   }data;
   int line_number;
+  struct cfg_t *cfg;
 };
 
 struct statement_sequence_t{
   struct statement_t *s;
   struct statement_sequence_t *next;
+  struct cfg_t *cfg;
 };
 
 /* ---------------------------------------------------------------- */
@@ -401,11 +421,51 @@ struct program_t {
 };
 
 
+/* ================================================================
+ * Custom structure declarations
+ * ================================================================
+ */
+
+struct parent_node_t {
+    struct basic_block_t *parent;
+    struct parent_node_t *next;
+};
+
+#define THREE_ADDR_T_ASSIGN 1
+#define THREE_ADDR_T_WHILE 2
+#define THREE_ADDR_T_IF 3
+#define THREE_ADDR_T_DUMMY 4
+
+struct three_addr_t {
+    int type; // ASSIGN, WHILE, IF, DUMMY
+    int LHS;
+    int op1;
+    int op2;
+    int op;
+    struct three_addr_t *next;
+    struct basic_block_t *next_b1;
+    struct basic_block_t *next_b2;
+
+};
+
+struct basic_block_t {
+    struct three_addr_t *first;
+    struct three_addr_t *last;
+    struct parent_node_t *parents;
+};
+
+struct cfg_t {
+    struct basic_block_t *first;
+    struct basic_block_t *last;
+};
+
 
 /* ----------------------------------------------------------------
  * Function declarations
  * ----------------------------------------------------------------
  */
+
+char *new_type();
 int makekey(char* lexeme, int max_hashkeys);
 char * tolower(char *s);
 void print_tabs(int numOfTabs);

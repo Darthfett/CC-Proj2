@@ -70,6 +70,7 @@ struct scope_path{
 	struct scope_path * parent;
 };
 
+void printTable(struct hash_table_t *table);
 struct ht_scope_item_t* moveDownToNewScope(char* scope);
 struct scope_path *current_scope;
 struct hash_table_t *global_table;

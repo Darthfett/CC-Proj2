@@ -5,7 +5,26 @@
 
 #include "shared.h"
 
+/* -----------------------------------------------------------------------
+ * Returns a new name for a new temporary type (for 3-address code)
+ * -----------------------------------------------------------------------
+ */
 
+int new_type_num = 0;
+char *user_type_prefix = "__usr_t";
+
+char *new_type()
+{
+    char *name;
+    char num[20];
+    snprintf(num, 20, "%d", new_type_num);
+
+    name = (char*) malloc(sizeof(char) * (strlen(user_type_prefix) + strlen(num) + 1));
+    strcpy(name, user_type_prefix);
+    strcat(name, num);
+    new_type_num++;
+    return name;
+}
 
 /* ----------------------------------------------------------------------- 
  * Returns a hashkey value for the given lexeme
