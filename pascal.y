@@ -496,6 +496,8 @@ statement : assignment_statement
         $$->data.as = $1;
         $$->type = STATEMENT_T_ASSIGNMENT;
         $$->line_number = line_number;
+
+        $$->cfg = $1->cfg;
 	}
  | compound_statement
 	{
@@ -504,6 +506,8 @@ statement : assignment_statement
         $$->data.ss = $1;
         $$->type = STATEMENT_T_SEQUENCE;
         $$->line_number = line_number;
+
+        $$->cfg = $1->cfg;
 	}
  | if_statement
 	{
@@ -512,6 +516,8 @@ statement : assignment_statement
         $$->data.is = $1;
         $$->type = STATEMENT_T_IF;
         $$->line_number = line_number;
+
+        $$->cfg = $1->cfg;
 	}
  | while_statement
 	{
@@ -520,6 +526,8 @@ statement : assignment_statement
         $$->data.ws = $1;
         $$->type = STATEMENT_T_WHILE;
         $$->line_number = line_number;
+
+        $$->cfg = $1->cfg;
 	}
  | print_statement
         {
