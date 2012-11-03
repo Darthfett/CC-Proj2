@@ -524,44 +524,77 @@ while_statement : WHILE boolean_expression DO statement
         $$->s = $4;
 
         // Build CFG
-        struct cfg_t *cfg = (struct cfg_t*) malloc(sizeof(struct cfg_t));
 
-        cfg->first = $2->cfg->first;
-
+        /*
+         * dummy block
+         */
         struct basic_block_t *dummy = (struct basic_block_t*) malloc(sizeof(struct basic_block_t));
-        
+
+        // Add noop
         struct three_addr_t *noop = (struct three_addr_t*) malloc(sizeof(struct three_addr_t));
+
         noop->type = THREE_ADDR_T_DUMMY;
         noop->next = NULL;
         noop->next_b1 = NULL;
 
         dummy->first = dummy->last = noop;
 
-        cfg->last = dummy;
+        // Add parents
 
+        // dummy parent is boolexpr's last block
+        struct parent_node_t *dummy_parent = (struct parent_node_t*) malloc(sizeof(struct parent_node_t));
+
+        dummy_parent->parent = $2->cfg->last;
+        dummy_parent->next = NULL;
+        dummy->parents = dummy_parent;
+
+        /*
+         * statement block
+         */
+
+        // Statement block has new parent: boolexpr
+        struct parent_node_t *block_parent = (struct parent_node_t*) malloc(sizeof(struct parent_node_t));
+
+        block_parent->parent = $2->cfg->last;
+        block_parent->next = $4->cfg->first->parents;
+        $4->cfg->first->parents = block_parent;
+
+        // Last 3addr in statement block has next block: boolexpr
+        $4->cfg->last->last->next_b1 = $2->cfg->first;
+
+        /*
+         * boolexpr block
+         */
+
+        // boolexpr block has new parent: statement
+        struct parent_node_t *boolexpr_parent = (struct parent_node_t*) malloc(sizeof(struct parent_node_t));
+
+        boolexpr_parent->parent = $4->cfg->last;
+        boolexpr_parent->next = $2->cfg->first->parents;
+        $2->cfg->first->parents = boolexpr_parent;
+
+        // boolexpr block has new last 3addr: while 3addr
         struct three_addr_t *while_ = (struct three_addr_t*) malloc(sizeof(struct three_addr_t));
+
         while_->type = THREE_ADDR_T_WHILE;
         // TODO: while_->op1 = 
+
         while_->next = NULL;
         while_->next_b1 = $4->cfg->first;
         while_->next_b2 = dummy;
 
+        // Update boolexpr block to add while to end of last block
         $2->cfg->last->last->next = while_;
+        $2->cfg->last->last = while_;
 
-        struct parent_node_t *block_parent = (struct parent_node_t*) malloc(sizeof(struct parent_node_t));
-        struct parent_node_t *dummy_parent = (struct parent_node_t*) malloc(sizeof(struct parent_node_t));
-        struct parent_node_t *boole_parent = (struct parent_node_t*) malloc(sizeof(struct parent_node_t));
+        /*
+         * cfg
+         */
+        struct cfg_t *cfg = (struct cfg_t*) malloc(sizeof(struct cfg_t));
+        $$->cfg = cfg;
 
-        block_parent->parent = $$->cfg->first;
-        dummy_parent->parent = $$->cfg->first;
-        boole_parent->parent = $4->cfg->last;
-
-        block_parent->next = $4->cfg->first->parents;
-        $4->cfg->first->parents = block_parent;
-        dummy_parent->next = dummy->parents;
-        dummy->parents = dummy_parent;
-        boole_parent->next = $2->cfg->first->parents;
-        $2->cfg->first->parents = boole_parent;
+        cfg->first = $2->cfg->first;
+        cfg->last = dummy;
         }
  ;
 
