@@ -150,9 +150,6 @@ program : program_heading semicolon class_list DOT
 program_heading : PROGRAM identifier
 	{
 	// Change our scope to be within this program
-	if ( moveDownToNewScope($2) == NULL ) {
-		yyerror("Program Identifier has already been used");
-	}
 	printf("program_heading : PROGRAM identifier \n");
 	$$ = (struct program_heading_t *) malloc(sizeof(struct program_heading_t));
 	$$->id = $2;
