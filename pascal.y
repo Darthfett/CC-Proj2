@@ -471,9 +471,24 @@ statement_sequence : statement
         $$ = (struct statement_sequence_t*) malloc(sizeof(struct statement_sequence_t));
         $$->s = $3;
         $$->next = $1;
-        $$->cfg = $1->cfg;
-        $$->cfg->last->last->next = $3->cfg->first->first;
-        $$->cfg->last = $3->cfg->first;
+
+        // Make CFG
+
+        $$->cfg = (struct cfg_t*) malloc(sizeof(struct cfg_t));
+        $$->cfg->first = $1->cfg->first;
+        $$->cfg->last = $3->cfg->last;
+
+        if ($3->cfg->first->parents != NULL) {
+            // Okay to merge blocks
+            $1->cfg->last->last->next = $3->cfg->first->first;
+
+            // Update last pointer
+            $1->cfg->last->last = $3->cfg->first->last;
+        } else {
+            // Not okay to merge blocks
+            $1->cfg->last->last->next_b1 = $3->cfg->first;
+        }
+
 	}
  ;
 
