@@ -185,12 +185,8 @@ identifier_list : identifier_list comma identifier
 
 class_list : class_list class_identification PBEGIN class_block END
 	{
+        printf("UNUSED\n");
 	printf("class_list : class_list class_identification PBEGIN class_block END \n");
-	$$ = (struct class_list_t*) malloc(sizeof(struct class_list_t));
-	
-	$$->next = $1;
-	$$->ci = $2;
-	$$->cb = $4;
 	}
  | class_identification PBEGIN class_block END
 	{
@@ -215,14 +211,9 @@ class_identification : CLASS identifier
 	}
 | CLASS identifier EXTENDS identifier
 	{
+        printf("UNUSED\n");
 	printf("class_identification : CLASS identifier EXTENDS identifier \n");
 
-	$$ = (struct class_identification_t*) malloc(sizeof(struct class_identification_t));
-        // TODO - Create class node
-        // TODO - Verify identifier as class node
-	$$->id = $2;
-	$$->extend = $4;
-	$$->line_number = line_number;
 	}
 ;
 
@@ -238,14 +229,8 @@ class_block : variable_declaration_part func_declaration_list
 
 type_denoter : array_type
 	{
+        printf("UNUSED\n");
 	printf("type_denoter : array_type \n");
-
-        $$ = (struct type_denoter_t*) malloc(sizeof(struct type_denoter_t));
-	$$->type = TYPE_DENOTER_T_ARRAY_TYPE;
-	
-	// $$->name = ?;
-	$$->data.at = $1;
-
 	}
  | identifier
 	{
@@ -259,20 +244,15 @@ type_denoter : array_type
 
 array_type : ARRAY LBRAC range RBRAC OF type_denoter
 	{
+        printf("UNUSED\n");
 	printf("array_type : ARRAY LBRAC range RBRAC OF type_denoter \n");
-	$$ = (struct array_type_t*) malloc(sizeof(struct array_type_t));
-	$$->r = $3;
-	$$->td = $6;
 	}
  ;
 
 range : unsigned_integer DOTDOT unsigned_integer
 	{
+        printf("UNUSED\n");
 	printf("range : unsigned_integer DOTDOT unsigned_integer\nValue1 = %i\nValue2 = %i\n",$1->ui,$3->ui);
-	$$ = (struct range_t*) malloc(sizeof(struct range_t));
-	$$->min = $1;
-	$$->max = $3;
-	// TODO: verify min <= max ?
 	}
  ;
 
@@ -324,10 +304,8 @@ variable_declaration : identifier_list COLON type_denoter
 
 func_declaration_list : func_declaration_list semicolon function_declaration
 	{
+        printf("UNUSED\n");
 	printf("func_declaration_list : func_declaration_list semicolon function_declaration \n");
-	$$ = (struct func_declaration_list_t*) malloc(sizeof(struct func_declaration_list_t));
-	$$->next = $1;
-	$$->fd = $3;
 	}
  | function_declaration
 	{
@@ -384,7 +362,6 @@ formal_parameter_section : value_parameter_specification
 
 value_parameter_specification : identifier_list COLON identifier
 	{
-	// The previous rule has nothing that needs to be done?
 	printf("value_parameter_specification : identifier_list COLON identifier \n");
         $$ = (struct formal_parameter_section_t*) malloc(sizeof(struct formal_parameter_section_t));
         $$->il = $1;
@@ -476,6 +453,7 @@ compound_statement : PBEGIN statement_sequence END
 	{
 	printf("compound_statement : PBEGIN statement_sequence END \n");
         $$ = $2;
+        $$->cfg = $2->cfg;
 	}
  ;
 
@@ -485,6 +463,7 @@ statement_sequence : statement
         $$ = (struct statement_sequence_t*) malloc(sizeof(struct statement_sequence_t));
         $$->s = $1;
         $$->next = NULL;
+        $$->cfg = $1->cfg;
 	}
  | statement_sequence semicolon statement
 	{
@@ -492,6 +471,9 @@ statement_sequence : statement
         $$ = (struct statement_sequence_t*) malloc(sizeof(struct statement_sequence_t));
         $$->s = $3;
         $$->next = $1;
+        $$->cfg = $1->cfg;
+        $$->cfg->last->last->next = $3->cfg->first->first;
+        $$->cfg->last = $3->cfg->first;
 	}
  ;
 
@@ -529,11 +511,8 @@ statement : assignment_statement
 	}
  | print_statement
         {
+        printf("UNUSED\n");
 	printf("statement : print_statement \n");
-        $$ = (struct statement_t*) malloc(sizeof(struct statement_t));
-        $$->data.ps = $1;
-        $$->type = STATEMENT_T_PRINT;
-        $$->line_number = line_number;
         }
  ;
 
@@ -543,7 +522,47 @@ while_statement : WHILE boolean_expression DO statement
         $$ = (struct while_statement_t*) malloc(sizeof(struct while_statement_t));
         $$->e = $2;
         $$->s = $4;
-	}
+
+        // Build CFG
+        struct cfg_t *cfg = (struct cfg_t*) malloc(sizeof(struct cfg_t));
+
+        cfg->first = $2->cfg->first;
+
+        struct basic_block_t *dummy = (struct basic_block_t*) malloc(sizeof(struct basic_block_t));
+        
+        struct three_addr_t *noop = (struct three_addr_t*) malloc(sizeof(struct three_addr_t));
+        noop->type = THREE_ADDR_T_DUMMY;
+        noop->next = NULL;
+        noop->next_b1 = NULL;
+
+        dummy->first = dummy->last = noop;
+
+        cfg->last = dummy;
+
+        struct three_addr_t *while_ = (struct three_addr_t*) malloc(sizeof(struct three_addr_t));
+        while_->type = THREE_ADDR_T_WHILE;
+        // TODO: while_->op1 = 
+        while_->next = NULL;
+        while_->next_b1 = $4->cfg->first;
+        while_->next_b2 = dummy;
+
+        $2->cfg->last->last->next = while_;
+
+        struct parent_node_t *block_parent = (struct parent_node_t*) malloc(sizeof(struct parent_node_t));
+        struct parent_node_t *dummy_parent = (struct parent_node_t*) malloc(sizeof(struct parent_node_t));
+        struct parent_node_t *boole_parent = (struct parent_node_t*) malloc(sizeof(struct parent_node_t));
+
+        block_parent->parent = $$->cfg->first;
+        dummy_parent->parent = $$->cfg->first;
+        boole_parent->parent = $4->cfg->last;
+
+        block_parent->next = $4->cfg->first->parents;
+        $4->cfg->first->parents = block_parent;
+        dummy_parent->next = dummy->parents;
+        dummy->parents = dummy_parent;
+        boole_parent->next = $2->cfg->first->parents;
+        $2->cfg->first->parents = boole_parent;
+        }
  ;
 
 if_statement : IF boolean_expression THEN statement ELSE statement
@@ -598,18 +617,15 @@ assignment_statement : variable_access ASSIGNMENT expression
         $$->va = $1;
         $$->e = $3;
         $$->oe = NULL;
-        $$->cfg = (struct cfg_t*) malloc(sizeof(struct cfg_t));
-
-        struct basic_block_t *block = (struct basic_block_t*) malloc(sizeof(struct basic_block_t));
-        $$->cfg->first = $$->cfg->last = block;
+        $$->cfg = $3->cfg;
         
         struct three_addr_t *assign = (struct three_addr_t*) malloc(sizeof(struct three_addr_t));
-        block->first = block->last = assign;
         assign->type = THREE_ADDR_T_ASSIGN;
         // TODO: assign->LHS = ?
         // TODO: assign->op1 = ?
         assign->next = NULL;
         assign->next_b1 = NULL;
+        $$->cfg->last->last->next = assign;
 	}
  | variable_access ASSIGNMENT object_instantiation
 	{
