@@ -720,9 +720,8 @@ object_instantiation: NEW identifier
 
 print_statement : PRINT variable_access
         {
+        printf("UNUSED\n");
 	printf("print_statement : PRINT variable_access \n");
-        $$ = (struct print_statement_t*) malloc(sizeof(struct print_statement_t));
-        $$->va = $2;
         }
 ;
 
@@ -798,6 +797,7 @@ index_expression_list : index_expression_list comma index_expression
 
 index_expression : expression
 	{
+        printf("UNUSED\n");
 	printf("index_expression : expression \n");
         $$ = $1;
 	} ;
@@ -885,6 +885,8 @@ expression : simple_expression
         $$->relop = 0;
         $$->se2 = NULL;
         $$->expr = $1->expr;
+
+        $$->cfg = $1->cfg;
 	}
  | simple_expression relop simple_expression
 	{
@@ -893,6 +895,27 @@ expression : simple_expression
         $$->se1 = $1;
         $$->relop = $2;
         $$->se2 = $3;
+
+        $$->cfg = (struct cfg_t*) malloc(sizeof(struct cfg_t));
+
+        $$->cfg->first = $1->cfg->first;
+        $$->cfg->last = $1->cfg->last;
+
+        struct three_addr_t *cmp = (struct three_addr_t*) malloc(sizeof(struct three_addr_t));
+        cmp->type = THREE_ADDR_T_ASSIGN;
+        char *lhs = new_type();
+        cmp->LHS = get_name_hashval(lhs);
+        cmp->op1 = $1->cfg->last->last->LHS;
+        cmp->op2 = $3->cfg->last->last->LHS;
+        cmp->op = $2;
+        cmp->next = NULL;
+        cmp->next_b1 = NULL;
+        cmp->next_b2 = NULL;
+
+        // Merge blocks
+        $1->cfg->last->last->next = $3->cfg->first->first;
+        $3->cfg->last->last->next = cmp;
+        $1->cfg->last->last = cmp;
 	}
  ;
 
@@ -904,6 +927,8 @@ simple_expression : term
         $$->addop = 0;
         $$->expr = $1->expr;
         $$->next = NULL;
+
+        $$->cfg = $1->cfg;
 	}
  | simple_expression addop term
 	{
@@ -912,6 +937,27 @@ simple_expression : term
         $$->t = $3;
         $$->addop = $2;
         $$->next = $1;
+
+        $$->cfg = (struct cfg_t*) malloc(sizeof(struct cfg_t));
+
+        $$->cfg->first = $1->cfg->first;
+        $$->cfg->last = $1->cfg->last;
+
+        struct three_addr_t *cmp = (struct three_addr_t*) malloc(sizeof(struct three_addr_t));
+        cmp->type = THREE_ADDR_T_ASSIGN;
+        char *lhs = new_type();
+        cmp->LHS = get_name_hashval(lhs);
+        cmp->op1 = $1->cfg->last->last->LHS;
+        cmp->op2 = $3->cfg->last->last->LHS;
+        cmp->op = $2;
+        cmp->next = NULL;
+        cmp->next_b1 = NULL;
+        cmp->next_b2 = NULL;
+
+        // Merge blocks
+        $1->cfg->last->last->next = $3->cfg->first->first;
+        $3->cfg->last->last->next = cmp;
+        $1->cfg->last->last = cmp;
 	}
  ;
 
@@ -923,6 +969,8 @@ term : factor
         $$->mulop = 0;
         $$->expr = $1->expr;
         $$->next = NULL;
+
+        $$->cfg = $1->cfg;
 	}
  | term mulop factor
 	{
@@ -931,6 +979,27 @@ term : factor
         $$->f = $3;
         $$->mulop = $2;
         $$->next = $1;
+
+        $$->cfg = (struct cfg_t*) malloc(sizeof(struct cfg_t));
+
+        $$->cfg->first = $1->cfg->first;
+        $$->cfg->last = $1->cfg->last;
+
+        struct three_addr_t *cmp = (struct three_addr_t*) malloc(sizeof(struct three_addr_t));
+        cmp->type = THREE_ADDR_T_ASSIGN;
+        char *lhs = new_type();
+        cmp->LHS = get_name_hashval(lhs);
+        cmp->op1 = $1->cfg->last->last->LHS;
+        cmp->op2 = $3->cfg->last->last->LHS;
+        cmp->op = $2;
+        cmp->next = NULL;
+        cmp->next_b1 = NULL;
+        cmp->next_b2 = NULL;
+
+        // Merge blocks
+        $1->cfg->last->last->next = $3->cfg->first->first;
+        $3->cfg->last->last->next = cmp;
+        $1->cfg->last->last = cmp;
 	}
  ;
 
@@ -954,6 +1023,25 @@ factor : sign factor
         $$->data.f.sign = $1;
         $$->data.f.next = $2;
         // TODO - $$->expr
+
+        $$->cfg = (struct cfg_t*) malloc(sizeof(struct cfg_t));
+
+        $$->cfg->first = $2->cfg->first;
+        $$->cfg->last = $2->cfg->last;
+
+        struct three_addr_t *cmp = (struct three_addr_t*) malloc(sizeof(struct three_addr_t));
+        cmp->type = THREE_ADDR_T_ASSIGN;
+        char *lhs = new_type();
+        cmp->LHS = get_name_hashval(lhs);
+        cmp->op1 = $2->cfg->last->last->LHS;
+        cmp->op2 = get_name_hashval("-1");
+        cmp->op = STAR;
+        cmp->next = NULL;
+        cmp->next_b1 = NULL;
+        cmp->next_b2 = NULL;
+
+        // Merge blocks
+        $2->cfg->last->last->next = cmp;
 	}
  | primary 
 	{
@@ -963,6 +1051,7 @@ factor : sign factor
         $$->data.p = $1;
         // TODO - $$->expr
 
+        $$->cfg = $1->cfg;
 	}
  ;
 
