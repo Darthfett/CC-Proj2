@@ -144,6 +144,8 @@ program : program_heading semicolon class_list DOT
 	program = $$;
 	$$->ph = $1;
 	$$->cl = $3;
+
+        printf("\n\n");
 	}
  ;
 
@@ -436,6 +438,8 @@ function_block : variable_declaration_part statement_part
         $$ = (struct function_block_t*) malloc(sizeof(struct function_block_t));
         $$->vdl = $1;
         $$->ss = $2;
+
+        $$->cfg = $2->cfg;
 	}
 ;
 
@@ -596,8 +600,8 @@ while_statement : WHILE boolean_expression DO statement
         // boolexpr block has new last 3addr: while 3addr
         struct three_addr_t *while_ = (struct three_addr_t*) malloc(sizeof(struct three_addr_t));
 
-        while_->type = THREE_ADDR_T_WHILE;
-        // TODO: while_->op1 = 
+        while_->type = THREE_ADDR_T_BRANCH;
+        while_->op1 = $2->cfg->last->last->LHS;
 
         while_->next = NULL;
         while_->next_b1 = $4->cfg->first;
@@ -634,10 +638,10 @@ if_statement : IF boolean_expression THEN statement ELSE statement
         // Make the 'if' three-address code
         struct three_addr_t *if_three_addr = (struct three_addr_t*) malloc(sizeof(struct three_addr_t));
         $$->cfg->first->first = $$->cfg->first->last = if_three_addr;
-        $$->cfg->first->last->type = IF;
-        $$->cfg->first->last->next = NULL;
-        $$->cfg->first->last->next_b1 = $4->cfg->first;
-        $$->cfg->first->last->next_b2 = $6->cfg->first;
+        if_three_addr->type = THREE_ADDR_T_BRANCH;
+        if_three_addr->next = NULL;
+        if_three_addr->next_b1 = $4->cfg->first;
+        if_three_addr->next_b2 = $6->cfg->first;
 
         // Make the 'next' dummy block
         struct basic_block_t *dummy = (struct basic_block_t*) malloc(sizeof(struct basic_block_t));
@@ -1027,6 +1031,7 @@ factor : sign factor
 
         // Merge blocks
         $2->cfg->last->last->next = cmp;
+        $2->cfg->last->last = cmp;
 	}
  | primary 
 	{

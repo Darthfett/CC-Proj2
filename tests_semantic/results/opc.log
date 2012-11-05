@@ -1,4 +1,4 @@
-Test Run By darthfett on Sun Nov  4 21:21:37 2012
+Test Run By darthfett on Sun Nov  4 21:44:44 2012
 Native configuration is i686-pc-linux-gnu
 
 		=== opc tests ===
@@ -14,15 +14,6 @@ Running ./tests_semantic.exp ...
 spawn ./test_compiled.sh
 ./test_compiled.sh: 3: .: Can't open ../tests_lib.inc
 FAIL: Binary compiled
-spawn ./test_valid_class_definition.sh
-./test_valid_class_definition.sh: 3: .: Can't open ../tests_lib.inc
-FAIL: Simple, valid class definition
-spawn ./test_boolean_assignment_valid.sh
-./test_boolean_assignment_valid.sh: 3: .: Can't open ../tests_lib.inc
-FAIL: Valid boolean assignment
-spawn ./test_many_nots.sh
-./test_many_nots.sh: 3: .: Can't open ../tests_lib.inc
-FAIL: Too many (valid) NOTs
 spawn ./test_function_return_valid.sh
 ./test_function_return_valid.sh: 3: .: Can't open ../tests_lib.inc
 FAIL: Valid set of return value of a function
@@ -47,12 +38,9 @@ FAIL: Complex expression
 spawn ./test_expression_complex2.sh
 ./test_expression_complex2.sh: 3: .: Can't open ../tests_lib.inc
 FAIL: Complex expression 2
-spawn ./test_this_global_variable_valid.sh
-./test_this_global_variable_valid.sh: 3: .: Can't open ../tests_lib.inc
-FAIL: this global variable, valid
 testcase ./tests_semantic.exp completed in 0 seconds
 
 		=== opc Summary ===
 
-# of unexpected failures	13
-runtest completed at Sun Nov  4 21:21:37 2012
+# of unexpected failures	9
+runtest completed at Sun Nov  4 21:44:44 2012

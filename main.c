@@ -35,5 +35,10 @@ int main() {
 
     /* If there were parsing errors, exit. */
     exit_on_errors();
+
+    print_program();
+
+    exit_on_errors();
+
     return 0;
 }

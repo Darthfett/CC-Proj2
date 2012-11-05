@@ -1,4 +1,4 @@
-Test Run By darthfett on Sun Nov  4 21:21:37 2012
+Test Run By darthfett on Sun Nov  4 21:44:44 2012
 Native configuration is i686-pc-linux-gnu
 
 		=== opc tests ===
@@ -9,9 +9,6 @@ Schedule of variations:
 Running target unix
 Running ./tests_semantic.exp ...
 FAIL: Binary compiled
-FAIL: Simple, valid class definition
-FAIL: Valid boolean assignment
-FAIL: Too many (valid) NOTs
 FAIL: Valid set of return value of a function
 FAIL: Function local variable declared
 FAIL: Function, local variable list
@@ -20,8 +17,7 @@ FAIL: While do
 FAIL: Simple expression
 FAIL: Complex expression
 FAIL: Complex expression 2
-FAIL: this global variable, valid
 
 		=== opc Summary ===
 
-# of unexpected failures	13
+# of unexpected failures	9

@@ -434,9 +434,8 @@ struct parent_node_t {
 };
 
 #define THREE_ADDR_T_ASSIGN 1
-#define THREE_ADDR_T_WHILE 2
-#define THREE_ADDR_T_IF 3
-#define THREE_ADDR_T_DUMMY 4
+#define THREE_ADDR_T_BRANCH 2
+#define THREE_ADDR_T_DUMMY  3
 
 // Operation codes (starting with arbitrary numbers)
 #define OP_ASSIGNMENT 37
