@@ -438,6 +438,19 @@ struct parent_node_t {
 #define THREE_ADDR_T_IF 3
 #define THREE_ADDR_T_DUMMY 4
 
+// Operation codes (starting with arbitrary numbers)
+#define OP_ASSIGNMENT 37
+#define OP_PLUS 38
+#define OP_MINUS 39
+#define OP_EQUAL 40
+#define OP_NOTEQUAL 41
+#define OP_LT 42
+#define OP_GT 43
+#define OP_LE 44
+#define OP_GE 45
+#define OP_NOT 46
+
+
 struct three_addr_t {
     int type; // ASSIGN, WHILE, IF, DUMMY
     int LHS;

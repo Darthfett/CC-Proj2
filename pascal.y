@@ -674,8 +674,10 @@ assignment_statement : variable_access ASSIGNMENT expression
         
         struct three_addr_t *assign = (struct three_addr_t*) malloc(sizeof(struct three_addr_t));
         assign->type = THREE_ADDR_T_ASSIGN;
-        // TODO: assign->LHS = ?
-        // TODO: assign->op1 = ?
+        assign->LHS = get_name_hashval($1->data.id);
+        assign->op1 = $3->cfg->last->last->LHS;
+        assign->op = ASSIGNMENT;
+        
         assign->next = NULL;
         assign->next_b1 = NULL;
         $$->cfg->last->last->next = assign;
@@ -737,33 +739,18 @@ variable_access : identifier
 	}
  | indexed_variable
 	{
+        printf("UNUSED\n");
 	printf("variable_access : indexed_variable \n");
-        $$ = (struct variable_access_t*) malloc(sizeof(struct variable_access_t));
-        $$->type = VARIABLE_ACCESS_T_INDEXED_VARIABLE;
-        $$->data.iv = $1;
-
-        // $$->recordname = ?
-        // $$->expr = ?
 	}
  | attribute_designator
 	{
+        printf("UNUSED\n");
 	printf("variable_access : attribute_designator \n");
-        $$ = (struct variable_access_t*) malloc(sizeof(struct variable_access_t));
-        $$->type = VARIABLE_ACCESS_T_ATTRIBUTE_DESIGNATOR;
-        $$->data.ad = $1;
-
-        // $$->recordname = ?
-        // $$->expr = ?
 	}
  | method_designator
 	{
+        printf("UNUSED\n");
 	printf("variable_access : method_designator \n");
-        $$ = (struct variable_access_t*) malloc(sizeof(struct variable_access_t));
-        $$->type = VARIABLE_ACCESS_T_METHOD_DESIGNATOR;
-        $$->data.md = $1;
-
-        // $$->recordname = ?
-        // $$->expr = ?
 	}
  ;
 
@@ -804,19 +791,15 @@ index_expression : expression
 
 attribute_designator : variable_access DOT identifier
 	{
+        printf("UNUSED\n");
 	printf("attribute_designator : variable_access DOT identifier \n");
-        $$ = (struct attribute_designator_t*) malloc(sizeof(struct attribute_designator_t));
-        $$->va = $1;
-        $$->id = $3;
 	}
 ;
 
 method_designator: variable_access DOT function_designator
 	{
+        printf("UNUSED\n");
 	printf("method_designator: variable_access DOT function_designator \n");
-        $$ = (struct method_designator_t*) malloc(sizeof(struct method_designator_t));
-        $$->va = $1;
-        $$->fd = $3;
 	}
  ;
 
@@ -1006,12 +989,14 @@ term : factor
 sign : PLUS
 	{
 	printf("sign : PLUS \n");
-
+        $$ = (int*) malloc(sizeof(int));
+        *$$ = OP_PLUS;
 	}
  | MINUS
 	{
 	printf("sign : MINUS \n");
-
+        $$ = (int*) malloc(sizeof(int));
+        *$$ = OP_MINUS;
 	}
  ;
 
@@ -1062,6 +1047,23 @@ primary : variable_access
         $$->type = PRIMARY_T_VARIABLE_ACCESS;
         $$->data.va = $1;
         $$->expr = $1->expr;
+
+        struct cfg_t *cfg = (struct cfg_t*) malloc(sizeof(struct cfg_t));
+        struct basic_block_t *block = (struct basic_block_t*) malloc(sizeof(struct basic_block_t));
+        struct three_addr_t *dummy = (struct three_addr_t*) malloc(sizeof(struct three_addr_t));
+
+        cfg->first = cfg->last = block;
+        block->first = block->last = dummy;
+
+        dummy->type = THREE_ADDR_T_DUMMY;
+        dummy->LHS = get_name_hashval($1->data.id);
+        dummy->next = NULL;
+        dummy->next_b1 = NULL;
+
+        block->parents = NULL;
+
+        $$->cfg = cfg;
+
 	}
  | unsigned_constant
 	{
@@ -1070,14 +1072,31 @@ primary : variable_access
         $$->type = PRIMARY_T_UNSIGNED_CONSTANT;
         $$->data.un = $1;
         $$->expr = $1->expr;
+
+        char buffer[20];
+        snprintf(buffer, 20, "%d", $1->ui);
+
+        struct cfg_t *cfg = (struct cfg_t*) malloc(sizeof(struct cfg_t));
+        struct basic_block_t *block = (struct basic_block_t*) malloc(sizeof(struct basic_block_t));
+        struct three_addr_t *dummy = (struct three_addr_t*) malloc(sizeof(struct three_addr_t));
+
+        cfg->first = cfg->last = block;
+        block->first = block->last = dummy;
+
+        dummy->type = THREE_ADDR_T_DUMMY;
+        dummy->LHS = get_name_hashval(buffer);
+        dummy->next = NULL;
+        dummy->next_b1 = NULL;
+
+        block->parents = NULL;
+
+        $$->cfg = cfg;
+
 	}
  | function_designator
 	{
+        printf("UNUSED\n");
 	printf("primary : | function_designator\n");
-        $$ = (struct primary_t*) malloc(sizeof(struct primary_t));
-        $$->type = PRIMARY_T_FUNCTION_DESIGNATOR;
-        $$->data.fd = $1;
-        //$$->expr = $1->expr;
 	}
  | LPAREN expression RPAREN
 	{
@@ -1086,6 +1105,8 @@ primary : variable_access
         $$->type = PRIMARY_T_EXPRESSION;
         $$->data.e = $2;
         $$->expr = $2->expr;
+
+        $$->cfg = $2->cfg;
 	}
  | NOT primary
 	{
@@ -1094,6 +1115,22 @@ primary : variable_access
         $$->type = PRIMARY_T_PRIMARY;
         $$->data.p.next = $2;
         // TODO - $$->expr
+
+        struct cfg_t *cfg = (struct cfg_t*) malloc(sizeof(struct cfg_t));
+        cfg->first = $2->cfg->first;
+        cfg->last = $2->cfg->last;
+
+        struct three_addr_t *not = (struct three_addr_t*) malloc(sizeof(struct three_addr_t));
+        not->type = THREE_ADDR_T_ASSIGN;
+        not->LHS = get_name_hashval(new_type());
+        not->op1 = $2->cfg->last->last->LHS;
+        not->op = OP_NOT;
+        not->next = NULL;
+        not->next_b1 = NULL;
+
+        cfg->last->last->next = not;
+        cfg->last->last = not;
+        $$->cfg = cfg;
 	}
  ;
 
@@ -1170,32 +1207,32 @@ mulop : STAR
 relop : EQUAL
 	{
 	printf("relop : EQUAL\n");
-
+        $$ = OP_EQUAL;
 	}
  | NOTEQUAL
 	{
 	printf("relop : | NOTEQUAL\n");
-
+        $$ = OP_NOTEQUAL;
 	}
  | LT
 	{
 	printf("relop : | LT\n");
-
+        $$ = OP_LT;
 	}
  | GT
 	{
 	printf("relop : | GT\n");
-
+        $$ = OP_GT;
 	}
  | LE
 	{
 	printf("relop : | LE\n");
-
+        $$ = OP_LE;
 	}
  | GE
 	{
 	printf("relop :  | GE\n");
-
+        $$ = OP_GE;
 	}
  ;
 
