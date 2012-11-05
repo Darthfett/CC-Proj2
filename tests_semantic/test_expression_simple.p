@@ -7,8 +7,8 @@ BEGIN
 
 FUNCTION testExpressionSimple;
 BEGIN
-   dd := 550;
-   ee := (dd / 2) - 200
+   dd := 550 + 2;
+   ee := (dd / 2) - 201
 END
 
 END

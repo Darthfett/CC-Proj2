@@ -448,6 +448,11 @@ struct parent_node_t {
 #define OP_LE 44
 #define OP_GE 45
 #define OP_NOT 46
+#define OP_OR 47
+#define OP_STAR 48
+#define OP_SLASH 49
+#define OP_MOD 50
+#define OP_AND 51
 
 
 struct three_addr_t {

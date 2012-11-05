@@ -6,6 +6,7 @@
 
 #include "shared.h"
 #include "symtab.h"
+#include "cfg.h"
 
 int error_flag = 0;
 

@@ -1,48 +1,52 @@
 #include "cfg.h"
+#include "symtab.h"
 
 extern struct program_t *program;
 extern int error_flag;
 
 void print_three_addr(struct three_addr_t *ta) {
+    char *lhs = get_hashval_name(ta->LHS);
+    char *op1 = get_hashval_name(ta->op1);
+    char *op2 = get_hashval_name(ta->op2);
     switch (ta->type) {
     case THREE_ADDR_T_ASSIGN:
         switch(ta->op) {
         case OP_ASSIGNMENT:
-            printf("%d = %d;\n", ta->LHS, ta->op1);
+            printf("%s = %s;\n", lhs, op1);
             break;
         case OP_PLUS:
-            printf("%d = %d + %d;\n", ta->LHS, ta->op1, ta->op2);
+            printf("%s = %s + %s;\n", lhs, op1, op2);
             break;
         case OP_MINUS:
-            printf("%d = %d - %d;\n", ta->LHS, ta->op1, ta->op2);
+            printf("%s = %s - %s;\n", lhs, op1, op2);
             break;
         case OP_EQUAL:
-            printf("%d = %d == %d;\n", ta->LHS, ta->op1, ta->op2);
+            printf("%s = %s == %s;\n", lhs, op1, op2);
             break;
         case OP_NOTEQUAL:
-            printf("%d = %d != %d;\n", ta->LHS, ta->op1, ta->op2);
+            printf("%s = %s != %s;\n", lhs, op1, op2);
             break;
         case OP_LT:
-            printf("%d = %d < %d;\n", ta->LHS, ta->op1, ta->op2);
+            printf("%s = %s < %s;\n", lhs, op1, op2);
             break;
         case OP_GT:
-            printf("%d = %d > %d;\n", ta->LHS, ta->op1, ta->op2);
+            printf("%s = %s > %s;\n", lhs, op1, op2);
             break;
         case OP_LE:
-            printf("%d = %d <= %d;\n", ta->LHS, ta->op1, ta->op2);
+            printf("%s = %s <= %s;\n", lhs, op1, op2);
             break;
         case OP_GE:
-            printf("%d = %d >= %d;\n", ta->LHS, ta->op1, ta->op2);
+            printf("%s = %s >= %s;\n", lhs, op1, op2);
             break;
         case OP_NOT:
-            printf("%d = !%d;\n", ta->LHS, ta->op1);
+            printf("%s = !%s;\n", lhs, op1);
             break;
         default:
-            printf("Invalid 3-address assignment op <%d>\n", ta->op);
+            printf("Invalid 3-address assignment type <%d>, op <%d>, LHS <%s>, op1 <%s>, next <%p>, next_b1 <%p>\n", ta->type, ta->op, lhs, op1, ta->next, ta->next_b1);
         }
         break;
     case THREE_ADDR_T_BRANCH:
-        printf("branch(%d, %p, %p);\n", ta->op1, ta->next_b1, ta->next_b2);
+        printf("branch(%s, %p, %p);\n", op1, ta->next_b1, ta->next_b2);
         break;
     case THREE_ADDR_T_DUMMY:
         printf("No Op;\n");
@@ -61,7 +65,11 @@ void print_program() {
     while(next != NULL) {
         printf("%d: ", i);
         print_three_addr(next);
-        next = next->next;
+        if (next->next == NULL && next->next_b1 != NULL) {
+            next = next->next_b1->first;
+        } else {
+            next = next->next;
+        }
         i++;
     }
 }

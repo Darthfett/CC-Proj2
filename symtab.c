@@ -12,7 +12,9 @@
 #define INT 1
 
 struct hash_table_t *name_table;
-int new_name_val = 0;
+int new_name_val;
+char **hash_names;
+int hash_names_size;
 
 struct hash_table_t* new_hash_table(int size)
 {
@@ -139,12 +141,25 @@ int get_name_hashval(char *name)
     struct ht_item_t *item = get_hashtable_item(name_table, name);
     int *new_val;
     if (item == NULL) {
+        /* Add item to name_table */
         item = (struct ht_item_t*) malloc(sizeof(struct ht_item_t));
         new_val = (int*) malloc(sizeof(int));
         *new_val = new_name_val;
 
         item->value_type = INT;
         item->value = new_val;
+
+        /* Index name in hash_names */
+        if (new_name_val >= hash_names_size) {
+            /* Table is full, double the size and copy the old stuff in */
+            char **new_hash_names = (char**) malloc(sizeof(char*) * hash_names_size * 2);
+            memcpy(new_hash_names, hash_names, sizeof(char*) * hash_names_size);
+            free(hash_names);
+
+            hash_names = new_hash_names;
+            hash_names_size *= 2;
+        }
+        hash_names[new_name_val] = name;
         new_name_val++;
         
         insert_item(name_table, name, item);
@@ -154,11 +169,28 @@ int get_name_hashval(char *name)
     }
 }
 
+char* get_hashval_name(int hashval)
+{
+    char *buffer;
+    if (hashval < hash_names_size) {
+        return hash_names[hashval];
+    }
+
+    // Buffer to hold invalid 16 chars + 10 for integer
+    buffer = (char*) malloc(sizeof(char) * 26);
+    snprintf(buffer, 26, "Invalid name <%d>", hashval);
+    return buffer;
+}
+
 /* ------------------------------------------------------------
  * Initializes the symbol table
  * ------------------------------------------------------------
  */
-void symtab_init()
+void symtab_init(void)
 {
+        new_name_val = 0;
+        hash_names_size = 50;
         name_table = new_hash_table(20);
+        hash_names = (char**) malloc(sizeof(char*) * hash_names_size);
+
 }

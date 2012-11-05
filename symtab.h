@@ -55,6 +55,7 @@ struct ht_item_t* remove_item(struct hash_table_t *hashtable, char *key);
 void printTable(struct hash_table_t *table);
 
 int get_name_hashval(char *name);
-void symtab_init();
+char* get_hashval_name(int hashval);
+void symtab_init(void);
 
 #endif

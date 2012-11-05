@@ -680,7 +680,7 @@ assignment_statement : variable_access ASSIGNMENT expression
         assign->type = THREE_ADDR_T_ASSIGN;
         assign->LHS = get_name_hashval($1->data.id);
         assign->op1 = $3->cfg->last->last->LHS;
-        assign->op = ASSIGNMENT;
+        assign->op = OP_ASSIGNMENT;
         
         assign->next = NULL;
         assign->next_b1 = NULL;
@@ -1173,39 +1173,39 @@ function_designator : identifier params
 addop: PLUS
 	{
 	printf("addop: PLUS\n");
-
+        $$ = OP_PLUS;
 	}
  | MINUS
 	{
 	printf("addop: | MINUS\n");
-
+        $$ = OP_MINUS;
 	}
  | OR
 	{
 	printf("addop: | OR\n");
-
+        $$ = OP_OR;
 	}
  ;
 
 mulop : STAR
 	{
 	printf("mulop : STAR\n");
-
+        $$ = OP_STAR;
 	}
  | SLASH
 	{
 	printf("mulop :  | SLASH\n");
-
+        $$ = OP_SLASH;
 	}
  | MOD
 	{
 	printf("mulop :  | MOD\n");
-
+        $$ = OP_MOD;
 	}
  | AND
 	{
 	printf("mulop :  | AND\n");
-
+        $$ = OP_AND;
 	}
  ;
 
