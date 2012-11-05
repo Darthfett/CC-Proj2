@@ -4,7 +4,8 @@
 extern struct program_t *program;
 extern int error_flag;
 
-void print_three_addr(struct three_addr_t *ta) {
+void print_three_addr(struct three_addr_t *ta)
+{
     char *lhs = get_hashval_name(ta->LHS);
     char *op1 = get_hashval_name(ta->op1);
     char *op2 = get_hashval_name(ta->op2);

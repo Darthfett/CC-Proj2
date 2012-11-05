@@ -12,6 +12,7 @@
 #include "shared.h"
 #include "rulefuncs.h"
 #include "usrdef.h"
+#include "cfg.h"
 #include <assert.h>
 
   int yylex(void);
@@ -688,23 +689,8 @@ assignment_statement : variable_access ASSIGNMENT expression
 	}
  | variable_access ASSIGNMENT object_instantiation
 	{
+        printf("UNUSED\n");
 	printf("assignment_statement : variable_access ASSIGNMENT object_instantiation \n");
-        $$ = (struct assignment_statement_t*) malloc(sizeof(struct assignment_statement_t));
-        $$->va = $1;
-        $$->e = NULL;
-        $$->oe = $3;
-        $$->cfg = (struct cfg_t*) malloc(sizeof(struct cfg_t));
-
-        struct basic_block_t *block = (struct basic_block_t*) malloc(sizeof(struct basic_block_t));
-        $$->cfg->first = $$->cfg->last = block;
-        
-        struct three_addr_t *assign = (struct three_addr_t*) malloc(sizeof(struct three_addr_t));
-        block->first = block->last = assign;
-        assign->type = THREE_ADDR_T_ASSIGN;
-        // TODO: assign->LHS = ?
-        // TODO: assign->op1 = ?
-        assign->next = NULL;
-        assign->next_b1 = NULL;
 	}
  ;
 
@@ -920,6 +906,7 @@ simple_expression : term
  | simple_expression addop term
 	{
 	printf("simple_expression : simple_expression addop term \n");
+
         $$ = (struct simple_expression_t*) malloc(sizeof(struct simple_expression_t));
         $$->t = $3;
         $$->addop = $2;
@@ -956,7 +943,7 @@ term : factor
         $$->mulop = 0;
         $$->expr = $1->expr;
         $$->next = NULL;
-
+        
         $$->cfg = $1->cfg;
 	}
  | term mulop factor
@@ -1068,7 +1055,6 @@ primary : variable_access
         block->parents = NULL;
 
         $$->cfg = cfg;
-
 	}
  | unsigned_constant
 	{
