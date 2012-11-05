@@ -244,6 +244,7 @@ struct factor_t{
     struct primary_t *p;
   }data;
   struct expression_data_t *expr;
+  struct cfg_t *cfg;
 };
 
 struct term_t;
@@ -252,6 +253,7 @@ struct term_t{
   int mulop;
   struct expression_data_t *expr;
   struct term_t *next;
+  struct cfg_t *cfg;
 };
 
 struct simple_expression_t;
