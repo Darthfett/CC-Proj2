@@ -113,6 +113,20 @@ void mark_block_seen(struct basic_block_t *block)
     seen_blocks_count++;
 }
 
+void remove_dummy_nodes(struct basic_block_t *block)
+{
+    struct three_addr_t *next = block->first;
+
+    while (next != NULL) {
+        if (next->next != NULL) {
+            if (next->type == THREE_ADDR_T_DUMMY) {
+                *next = *(next->next);
+            }
+        }
+        next = next->next;
+    }
+}
+
 void traverse_three_addr(struct three_addr_t *ta)
 {
     if (ta->type == THREE_ADDR_T_BRANCH) {
@@ -137,6 +151,8 @@ void traverse_block(struct basic_block_t *block)
         /* Already seen this block - don't traverse it again */
         return;
     }
+
+    remove_dummy_nodes(block);
 
     /* Go through block marking blocks as seen */
     struct three_addr_t *next = block->first;
@@ -187,6 +203,7 @@ void print_blocks(void)
 void print_program(void) {
     struct cfg_t *cfg = program->cl->cb->fdl->fd->fb->cfg;
     struct basic_block_t *block = cfg->first;
+    remove_dummy_nodes(block);
     traverse_block(block);
     print_blocks();
 }
