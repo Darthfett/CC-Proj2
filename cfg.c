@@ -71,10 +71,12 @@ struct three_addr_t* print_three_addr(struct three_addr_t *ta)
         printf("branch(%s, %d, %d);\n", op1, ta->next_b1->unique_id, ta->next_b2->unique_id);
         print_block(ta->next_b1);
         print_block(ta->next_b2);
+        /*
         if (ta->next_b1->last->next_b1 != NULL)
             return ta->next_b1->last->next_b1->first;
         else
             return NULL;
+        */
         break;
     case THREE_ADDR_T_DUMMY:
         printf("No Op; // lhs = %s, op = %d\n", lhs, ta->op);
@@ -87,6 +89,34 @@ struct three_addr_t* print_three_addr(struct three_addr_t *ta)
     return ta->next;
 }
 
+int seen_block(struct basic_block_t *block)
+{
+    int i;
+    for (i = 0; i < seen_blocks_count; i++) {
+        if (seen_blocks[i] == block) {
+            return 1;
+        }
+    }
+    return 0;
+}
+
+void mark_block_seen(struct basic_block_t *block)
+{
+    /* Check if there is room for the block */
+    if (seen_blocks_size == seen_blocks_count) {
+        /* Not enough room to add block -- double the size */
+        struct basic_block_t **new_seen_blocks = (struct basic_block_t**) malloc(sizeof(struct basic_block_t*) * seen_blocks_size * 2);
+        memcpy(new_seen_blocks, seen_blocks, seen_blocks_size);
+        free(seen_blocks);
+        seen_blocks = new_seen_blocks;
+        seen_blocks_size *= 2;
+    }
+
+    /* Add block to seen blocks */
+    seen_blocks[seen_blocks_count] = block;
+    seen_blocks_count++;
+}
+
 void print_block(struct basic_block_t *block)
 {
     if (block == NULL) {
@@ -96,27 +126,10 @@ void print_block(struct basic_block_t *block)
     }
 
     /* Check if block has been seen */
-    int block_seen = 0;
-    int i;
-    for (i = 0; i < seen_blocks_count; i++) {
-        if (seen_blocks[i] == block) {
-            block_seen = 1;
-            break;
-        }
-    }
+    int block_seen = seen_block(block);
 
     if (! block_seen) {
-        /* Add block to seen blocks */
-        if (seen_blocks_size == seen_blocks_count) {
-            /* Not enough room to add block -- double the size */
-            struct basic_block_t **new_seen_blocks = (struct basic_block_t**) malloc(sizeof(struct basic_block_t*) * seen_blocks_size * 2);
-            memcpy(new_seen_blocks, seen_blocks, seen_blocks_size);
-            free(seen_blocks);
-            seen_blocks = new_seen_blocks;
-            seen_blocks_size *= 2;
-        }
-        seen_blocks[seen_blocks_count] = block;
-        seen_blocks_count++;
+        mark_block_seen(block);
     } else {
         /* Already seen this block - don't print it out again */
         return;
@@ -138,7 +151,10 @@ void print_block(struct basic_block_t *block)
         } else {
             next = temp;
         }
+        next = temp;
     }
+
+    printf("end block %d:\n", block->unique_id);
 
 }
 
