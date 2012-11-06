@@ -10,7 +10,7 @@ int seen_blocks_count = 0;
 int seen_blocks_size = 20;
 
 
-struct three_addr_t* print_three_addr(struct three_addr_t *ta)
+void print_three_addr(struct three_addr_t *ta)
 {
     char *lhs = get_hashval_name(ta->LHS);
     char *op1 = get_hashval_name(ta->op1);
@@ -69,8 +69,6 @@ struct three_addr_t* print_three_addr(struct three_addr_t *ta)
         break;
     case THREE_ADDR_T_BRANCH:
         printf("branch(%s, %d, %d);\n", op1, ta->next_b1->unique_id, ta->next_b2->unique_id);
-        print_block(ta->next_b1);
-        print_block(ta->next_b2);
         /*
         if (ta->next_b1->last->next_b1 != NULL)
             return ta->next_b1->last->next_b1->first;
@@ -85,8 +83,6 @@ struct three_addr_t* print_three_addr(struct three_addr_t *ta)
         printf("Invalid 3-address code <%d>\n", ta->type);
         error_flag = 1;
     }
-
-    return ta->next;
 }
 
 int seen_block(struct basic_block_t *block)
@@ -117,7 +113,16 @@ void mark_block_seen(struct basic_block_t *block)
     seen_blocks_count++;
 }
 
-void print_block(struct basic_block_t *block)
+void traverse_three_addr(struct three_addr_t *ta)
+{
+    if (ta->type == THREE_ADDR_T_BRANCH) {
+        traverse_block(ta->next_b1);
+        traverse_block(ta->next_b2);
+    }
+    
+}
+
+void traverse_block(struct basic_block_t *block)
 {
     if (block == NULL) {
         printf("ERROR: print NULL block\n");
@@ -131,37 +136,64 @@ void print_block(struct basic_block_t *block)
     if (! block_seen) {
         mark_block_seen(block);
     } else {
-        /* Already seen this block - don't print it out again */
+        /* Already seen this block - don't traverse it again */
+        return;
+    }
+
+    /* Go through block marking blocks as seen */
+    struct three_addr_t *next = block->first;
+
+    while(next != NULL) {
+        traverse_three_addr(next);
+        
+        if (next->next == NULL) {
+            traverse_block(next->next_b1);
+            break;
+        }
+        next = next->next;
+    }
+}
+
+void print_block(struct basic_block_t *block)
+{
+    if (block == NULL) {
+        printf("ERROR: print NULL block\n");
+        error_flag = 1;
         return;
     }
 
     printf("block %d:\n", block->unique_id);
 
-    /* Not seen this block before.  Go ahead and print it out */
     struct three_addr_t *next = block->first;
-    struct three_addr_t *temp = NULL;
 
     while(next != NULL) {
         printf("%d: ", out_line_no);
-        temp = print_three_addr(next);
+        print_three_addr(next);
         out_line_no++;
-        if (temp == NULL && next->next_b1 != NULL) {
-            print_block(next->next_b1);
+        if (next->next == NULL && next->next_b1 != NULL) {
+            printf("%d: jump %d\n", out_line_no++, next->next_b1->unique_id);
             break;
-        } else {
-            next = temp;
         }
-        next = temp;
+        next = next->next;
     }
 
     printf("end block %d:\n", block->unique_id);
 
 }
 
+void print_blocks(void)
+{
+    int i;
+    for (i = 0; i < seen_blocks_count; i++) {
+        print_block(seen_blocks[i]);
+    }
+}
+
 void print_program(void) {
     struct cfg_t *cfg = program->cl->cb->fdl->fd->fb->cfg;
     struct basic_block_t *block = cfg->first;
-    print_block(block);
+    traverse_block(block);
+    print_blocks();
     /*
     struct three_addr_t *next = cfg->first->first;
     int i = 1;

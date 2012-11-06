@@ -3,9 +3,14 @@
 
 #include "shared.h"
 
-void print_program(void);
-struct three_addr_t* print_three_addr(struct three_addr_t *ta);
+int seen_block(struct basic_block_t *block);
+void mark_block_seen(struct basic_block_t *block);
+void traverse_three_addr(struct three_addr_t *ta);
+void traverse_block(struct basic_block_t *block);
+void print_three_addr(struct three_addr_t *ta);
 void print_block(struct basic_block_t *block);
+void print_blocks(void);
+void print_program(void);
 void init_cfg(void);
 
 #endif /* _CFG_H_ */
