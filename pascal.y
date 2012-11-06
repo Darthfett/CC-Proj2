@@ -481,27 +481,12 @@ statement_sequence : statement
         $$->cfg->last = $3->cfg->last;
 
         if ($3->cfg->first->parents == NULL) {
-            printf("\n");
-            printf("Merging blocks:\n");
-            print_three_addr($1->cfg->first->first);
-            printf("\n");
-            print_three_addr($3->cfg->first->first);
-            printf("\n");
-
             // Okay to merge blocks
             $1->cfg->last->last->next = $3->cfg->first->first;
 
             // Update last pointer
             $1->cfg->last->last = $3->cfg->first->last;
         } else {
-            printf("\n");
-            printf("Cannot merge blocks between:\n");
-            print_three_addr($1->cfg->first->first);
-            printf("\n");
-            print_three_addr($3->cfg->first->first);
-            printf("\n");
-
-
             // Not okay to merge blocks
             $1->cfg->last->last->next_b1 = $3->cfg->first;
         }

@@ -121,6 +121,7 @@ void remove_dummy_nodes(struct basic_block_t *block)
         if (next->next != NULL) {
             if (next->type == THREE_ADDR_T_DUMMY) {
                 *next = *(next->next);
+                continue;
             }
         }
         next = next->next;
@@ -184,7 +185,7 @@ void print_block(struct basic_block_t *block)
         printf("%d: ", out_line_no);
         print_three_addr(next);
         out_line_no++;
-        if (next->next == NULL && next->next_b1 != NULL) {
+        if (next->next == NULL && next->next_b1 != NULL && next->type != THREE_ADDR_T_BRANCH) {
             printf("%d: jump %d\n", out_line_no++, next->next_b1->unique_id);
             break;
         }
