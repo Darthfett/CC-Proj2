@@ -125,8 +125,6 @@ void traverse_three_addr(struct three_addr_t *ta)
 void traverse_block(struct basic_block_t *block)
 {
     if (block == NULL) {
-        printf("ERROR: print NULL block\n");
-        error_flag = 1;
         return;
     }
 
@@ -176,9 +174,6 @@ void print_block(struct basic_block_t *block)
         }
         next = next->next;
     }
-
-    printf("end block %d:\n", block->unique_id);
-
 }
 
 void print_blocks(void)
@@ -194,21 +189,6 @@ void print_program(void) {
     struct basic_block_t *block = cfg->first;
     traverse_block(block);
     print_blocks();
-    /*
-    struct three_addr_t *next = cfg->first->first;
-    int i = 1;
-
-    while(next != NULL) {
-        printf("%d: ", i);
-        next = print_three_addr(next);
-        if (next->next == NULL && next->next_b1 != NULL) {
-            next = next->next_b1->first;
-        } else {
-            next = next->next;
-        }
-        i++;
-    }
-    */
 }
 
 void init_cfg(void)
