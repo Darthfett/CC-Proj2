@@ -68,13 +68,19 @@ void print_three_addr(struct three_addr_t *ta)
         }
         break;
     case THREE_ADDR_T_BRANCH:
-        printf("branch(%s, %d, %d);\n", op1, ta->next_b1->unique_id, ta->next_b2->unique_id);
-        /*
-        if (ta->next_b1->last->next_b1 != NULL)
-            return ta->next_b1->last->next_b1->first;
-        else
-            return NULL;
-        */
+        if (ta->next_b1 == NULL) {
+            if (ta->next_b2 == NULL) {
+                printf("jump exit;");
+            } else {
+                printf("branch(%s, %s, %d);\n", op1, "exit", ta->next_b2->unique_id);
+            }
+        } else {
+            if (ta->next_b2 == NULL) {
+                printf("branch(%s, %d, %s);\n", op1, ta->next_b1->unique_id, "exit");
+            } else {
+                printf("branch(%s, %d, %d);\n", op1, ta->next_b1->unique_id, ta->next_b2->unique_id);
+            }
+        }
         break;
     case THREE_ADDR_T_DUMMY:
         printf("No Op; // lhs = %s, op = %d\n", lhs, ta->op);
@@ -131,8 +137,8 @@ void remove_dummy_nodes(struct basic_block_t *block)
 void traverse_three_addr(struct three_addr_t *ta)
 {
     if (ta->type == THREE_ADDR_T_BRANCH) {
-        traverse_block(ta->next_b1);
-        traverse_block(ta->next_b2);
+        traverse_block(ta->next_b1 = get_child_nondummy_block(ta->next_b1));
+        traverse_block(ta->next_b2 = get_child_nondummy_block(ta->next_b2));
     }
     
 }
@@ -162,11 +168,48 @@ void traverse_block(struct basic_block_t *block)
         traverse_three_addr(next);
         
         if (next->next == NULL) {
-            traverse_block(next->next_b1);
+
+            traverse_block(next->next_b1 = get_child_nondummy_block(next->next_b1));
             break;
         }
         next = next->next;
     }
+}
+
+int is_dummy_block(struct basic_block_t *block)
+{
+    struct three_addr_t *next = block->first;
+    while (next != NULL) {
+        if (next->type != THREE_ADDR_T_DUMMY) {
+            return 0;
+        }
+        next = next->next;
+    }
+    return 1;
+}
+
+struct basic_block_t* get_child_nondummy_block(struct basic_block_t *block)
+{
+    if (block == NULL) {
+        return NULL;
+    }
+    if (! is_dummy_block(block)) {
+        return block;
+    }
+
+    return get_child_nondummy_block(block->last->next_b1);
+}
+
+void print_transition_next_block(struct three_addr_t *next)
+{
+    if (next->next_b1 == NULL) {
+        printf("%d: jump exit;\n", out_line_no++);
+    } else if (next->type == THREE_ADDR_T_BRANCH) {
+        // Already transitioning 
+    } else {
+        printf("%d: jump %d;\n", out_line_no++, next->next_b1->unique_id);
+    }
+
 }
 
 void print_block(struct basic_block_t *block)
@@ -185,8 +228,9 @@ void print_block(struct basic_block_t *block)
         printf("%d: ", out_line_no);
         print_three_addr(next);
         out_line_no++;
-        if (next->next == NULL && next->next_b1 != NULL && next->type != THREE_ADDR_T_BRANCH) {
-            printf("%d: jump %d\n", out_line_no++, next->next_b1->unique_id);
+        if (next->next == NULL) {
+            // printf("%d: jump %d\n", out_line_no++, next->next_b1->unique_id);
+            print_transition_next_block(next);
             break;
         }
         next = next->next;
@@ -199,6 +243,7 @@ void print_blocks(void)
     for (i = 0; i < seen_blocks_count; i++) {
         print_block(seen_blocks[i]);
     }
+    printf("exit:\n");
 }
 
 void print_program(void) {
