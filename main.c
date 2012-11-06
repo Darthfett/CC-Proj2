@@ -29,6 +29,7 @@ extern struct program_t *program;
 extern void yyparse();
 
 int main() {
+    init_cfg();
     symtab_init();
 
     /* begin parsing */

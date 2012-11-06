@@ -480,13 +480,28 @@ statement_sequence : statement
         $$->cfg->first = $1->cfg->first;
         $$->cfg->last = $3->cfg->last;
 
-        if ($3->cfg->first->parents != NULL) {
+        if ($3->cfg->first->parents == NULL) {
+            printf("\n");
+            printf("Merging blocks:\n");
+            print_three_addr($1->cfg->first->first);
+            printf("\n");
+            print_three_addr($3->cfg->first->first);
+            printf("\n");
+
             // Okay to merge blocks
             $1->cfg->last->last->next = $3->cfg->first->first;
 
             // Update last pointer
             $1->cfg->last->last = $3->cfg->first->last;
         } else {
+            printf("\n");
+            printf("Cannot merge blocks between:\n");
+            print_three_addr($1->cfg->first->first);
+            printf("\n");
+            print_three_addr($3->cfg->first->first);
+            printf("\n");
+
+
             // Not okay to merge blocks
             $1->cfg->last->last->next_b1 = $3->cfg->first;
         }
@@ -562,6 +577,7 @@ while_statement : WHILE boolean_expression DO statement
         noop->next = NULL;
         noop->next_b1 = NULL;
 
+        dummy->unique_id = get_unique_id();
         dummy->first = dummy->last = noop;
 
         // Add parents
@@ -634,21 +650,61 @@ if_statement : IF boolean_expression THEN statement ELSE statement
         // Build CFG
 
         $$->cfg = (struct cfg_t*) malloc(sizeof(struct cfg_t));
-        $$->cfg->first = (struct basic_block_t*) malloc(sizeof(struct basic_block_t));
+        $$->cfg->first = $2->cfg->first;
+
+        /*
+         * boolexpr block
+         */
 
         // Make the 'if' three-address code
         struct three_addr_t *if_three_addr = (struct three_addr_t*) malloc(sizeof(struct three_addr_t));
-        $$->cfg->first->first = $$->cfg->first->last = if_three_addr;
         if_three_addr->type = THREE_ADDR_T_BRANCH;
+        if_three_addr->LHS = if_three_addr->op1 = $2->cfg->last->last->LHS;
         if_three_addr->next = NULL;
         if_three_addr->next_b1 = $4->cfg->first;
         if_three_addr->next_b2 = $6->cfg->first;
+        
+        // Append to boolexpr code
+        $2->cfg->last->last->next = if_three_addr;
+        $2->cfg->last->last = if_three_addr;
 
-        // Make the 'next' dummy block
+        /*
+         * dummy block
+         */
+
         struct basic_block_t *dummy = (struct basic_block_t*) malloc(sizeof(struct basic_block_t));
-        $4->cfg->last->last->next_b1 = dummy;
-        $6->cfg->last->last->next_b1 = dummy;
         $$->cfg->last = dummy;
+        struct three_addr_t *noop = (struct three_addr_t*) malloc(sizeof(struct three_addr_t));
+        noop->type = THREE_ADDR_T_DUMMY;
+        noop->next = NULL;
+        noop->next_b1 = NULL;
+
+        dummy->unique_id = get_unique_id();
+        dummy->first = dummy->last = noop;
+
+        /*
+         * First statement
+         */
+        $4->cfg->last->last->next_b1 = dummy;
+
+        // Connect s1 to its parent
+        struct parent_node_t *s1_p = (struct parent_node_t*) malloc(sizeof(struct parent_node_t));
+        s1_p->parent = $2->cfg->last;
+        s1_p->next = $4->cfg->first->parents;
+        $4->cfg->first->parents = s1_p;
+
+        // 
+
+        /*
+         * Second statement
+         */
+        $6->cfg->last->last->next_b1 = dummy;
+
+        // Connect s2 to its parent
+        struct parent_node_t *s2_p = (struct parent_node_t*) malloc(sizeof(struct parent_node_t));
+        s2_p->parent = $2->cfg->last;
+        s2_p->next = $6->cfg->first->parents;
+        $6->cfg->first->parents = s2_p;
 
         // Connect the dummy to its parents
         struct parent_node_t *p1 = (struct parent_node_t*) malloc(sizeof(struct parent_node_t));
@@ -659,12 +715,6 @@ if_statement : IF boolean_expression THEN statement ELSE statement
         p2->next = NULL;
         dummy->parents = p1;
 
-        // Make the dummy's noop three-address code
-        struct three_addr_t *noop = (struct three_addr_t*) malloc(sizeof(struct three_addr_t));
-        noop->type = THREE_ADDR_T_DUMMY;
-        noop->next = NULL;
-        noop->next_b1 = NULL;
-        dummy->first = dummy->last = noop;
 	}
  ;
 
@@ -686,6 +736,7 @@ assignment_statement : variable_access ASSIGNMENT expression
         assign->next = NULL;
         assign->next_b1 = NULL;
         $$->cfg->last->last->next = assign;
+        $$->cfg->last->last = assign;
 	}
  | variable_access ASSIGNMENT object_instantiation
 	{
@@ -1045,6 +1096,8 @@ primary : variable_access
         struct three_addr_t *dummy = (struct three_addr_t*) malloc(sizeof(struct three_addr_t));
 
         cfg->first = cfg->last = block;
+
+        block->unique_id = get_unique_id();
         block->first = block->last = dummy;
 
         dummy->type = THREE_ADDR_T_DUMMY;
@@ -1064,7 +1117,7 @@ primary : variable_access
         $$->data.un = $1;
         $$->expr = $1->expr;
 
-        char buffer[20];
+        char *buffer = (char*) malloc(sizeof(char) * 20);
         snprintf(buffer, 20, "%d", $1->ui);
 
         struct cfg_t *cfg = (struct cfg_t*) malloc(sizeof(struct cfg_t));
@@ -1072,6 +1125,8 @@ primary : variable_access
         struct three_addr_t *dummy = (struct three_addr_t*) malloc(sizeof(struct three_addr_t));
 
         cfg->first = cfg->last = block;
+        
+        block->unique_id = get_unique_id();
         block->first = block->last = dummy;
 
         dummy->type = THREE_ADDR_T_DUMMY;
@@ -1082,7 +1137,6 @@ primary : variable_access
         block->parents = NULL;
 
         $$->cfg = cfg;
-
 	}
  | function_designator
 	{

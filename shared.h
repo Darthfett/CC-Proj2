@@ -471,6 +471,7 @@ struct basic_block_t {
     struct three_addr_t *first;
     struct three_addr_t *last;
     struct parent_node_t *parents;
+    int unique_id;
 };
 
 struct cfg_t {
@@ -484,12 +485,13 @@ struct cfg_t {
  * ----------------------------------------------------------------
  */
 
-char *new_type();
+char *new_type(void);
 int makekey(char* lexeme, int max_hashkeys);
 char * tolower(char *s);
 void print_tabs(int numOfTabs);
 char *inttostring(int value);
 char *longtostring(long value);
+int get_unique_id(void);
 
 #endif
 

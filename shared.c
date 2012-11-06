@@ -5,6 +5,15 @@
 
 #include "shared.h"
 
+int new_unique_id_ = 0;
+
+int get_unique_id(void)
+{
+    int id = new_unique_id_;
+    new_unique_id_++;
+    return id;
+}
+
 /* -----------------------------------------------------------------------
  * Returns a new name for a new temporary type (for 3-address code)
  * -----------------------------------------------------------------------
