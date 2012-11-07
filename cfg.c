@@ -134,11 +134,92 @@ void remove_dummy_nodes(struct basic_block_t *block)
     }
 }
 
+void fix_dummy_children(struct basic_block_t *block)
+{
+    struct three_addr_t *ta = block->first;
+
+    while (ta != NULL) {
+        if (ta->next == NULL || ta->type == THREE_ADDR_T_BRANCH) {
+            if (!is_dummy_block(ta->next_b1)) {
+                traverse_block(ta->next_b1);
+            }
+
+            struct basic_block_t *next = ta->next_b1;
+            struct basic_block_t *prev = NULL;
+
+            while (is_dummy_block(next)) {
+                prev = next;
+                next = next->last->next_b1;
+            }
+
+            if (prev == NULL) {
+                // Not a dummy block
+            } else {
+                if (next != NULL) {
+                    printf("Update parents of dummy %d's children to %d\n", ta->next_b1->unique_id, block->unique_id);
+                } else {
+                    printf("Delete dummy block %d, and point to exit\n", ta->next_b1->unique_id);
+                }
+            }
+
+            if (next == NULL) {
+                ta->next_b1 = NULL;
+            } else {
+                /* Try to find prev in next's parents */
+                struct parent_node_t *p = next->parents;
+                while (p != NULL && p->parent != prev) {
+                    p = p->next;
+                }
+
+                if (p != NULL) {
+                    // Update parent to be block
+                    p->parent = block;
+                } else {
+                    printf("Error updating parents of block\n");
+                    error_flag = 1;
+                }
+                ta->next_b1 = next;
+            }
+
+            if (ta->type == THREE_ADDR_T_BRANCH) {
+
+                next = ta->next_b2;
+                prev = NULL;
+
+                while (is_dummy_block(next)) {
+                    prev = next;
+                    next = next->last->next_b1;
+                }
+
+                if (next == NULL) {
+                    ta->next_b1 = NULL;
+                } else {
+                    /* Try to find prev in next's parents */
+                    struct parent_node_t *p = next->parents;
+                    while (p != NULL && p->parent != prev) {
+                        p = p->next;
+                    }
+
+                    if (p != NULL) {
+                        // Update parent to be block
+                        p->parent = block;
+                    } else {
+                        printf("Error updating parents of block\n");
+                        error_flag = 1;
+                    }
+                    ta->next_b1 = next;
+                }
+            }
+        }
+        ta = ta->next;
+    }
+}
+
 void traverse_three_addr(struct three_addr_t *ta)
 {
     if (ta->type == THREE_ADDR_T_BRANCH) {
-        traverse_block(ta->next_b1 = get_child_nondummy_block(ta->next_b1));
-        traverse_block(ta->next_b2 = get_child_nondummy_block(ta->next_b2));
+        traverse_block(ta->next_b1);
+        traverse_block(ta->next_b2);
     }
     
 }
@@ -160,7 +241,8 @@ void traverse_block(struct basic_block_t *block)
     }
 
     remove_dummy_nodes(block);
-
+    fix_dummy_children(block);
+    
     /* Go through block marking blocks as seen */
     struct three_addr_t *next = block->first;
 
@@ -169,7 +251,7 @@ void traverse_block(struct basic_block_t *block)
         
         if (next->next == NULL) {
 
-            traverse_block(next->next_b1 = get_child_nondummy_block(next->next_b1));
+            traverse_block(next->next_b1);
             break;
         }
         next = next->next;
@@ -178,6 +260,9 @@ void traverse_block(struct basic_block_t *block)
 
 int is_dummy_block(struct basic_block_t *block)
 {
+    if (block == NULL) {
+        return 0;
+    }
     struct three_addr_t *next = block->first;
     while (next != NULL) {
         if (next->type != THREE_ADDR_T_DUMMY) {
@@ -246,12 +331,36 @@ void print_blocks(void)
     printf("exit:\n");
 }
 
+void print_parent_blocks(struct basic_block_t *block)
+{
+    printf("Parents of %d: ", block->unique_id);
+    struct parent_node_t *p = block->parents;
+    while (p != NULL) {
+        printf("%d", p->parent->unique_id);
+        p = p->next;
+        if (p != NULL) {
+            printf(", ");
+        }
+    }
+    printf("\n");
+}
+
+void print_block_parents(void)
+{
+    printf("\n");
+    int i;
+    for (i = 0; i < seen_blocks_count; i++) {
+        print_parent_blocks(seen_blocks[i]);
+    }
+}
+
 void print_program(void) {
     struct cfg_t *cfg = program->cl->cb->fdl->fd->fb->cfg;
     struct basic_block_t *block = cfg->first;
     remove_dummy_nodes(block);
     traverse_block(block);
     print_blocks();
+    print_block_parents();
 }
 
 void init_cfg(void)
