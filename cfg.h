@@ -3,17 +3,30 @@
 
 #include "shared.h"
 
-int is_dummy_block(struct basic_block_t *block);
-struct basic_block_t* get_child_nondummy_block(struct basic_block_t *block);
-void remove_dummy_nodes(struct basic_block_t *block);
 int seen_block(struct basic_block_t *block);
 void mark_block_seen(struct basic_block_t *block);
+void clear_blocks_seen(void);
 void traverse_three_addr(struct three_addr_t *ta);
 void traverse_block(struct basic_block_t *block);
+
+int is_dummy_block(struct basic_block_t *block);
+struct basic_block_t* get_child_nondummy_block(struct basic_block_t *block);
+struct parent_node_t* get_nondummy_parents(struct basic_block_t *block);
+
+void merge_dummy_3_addr(struct basic_block_t *block);
+void merge_dummy_parents(struct basic_block_t *block);
+void merge_dummy_children(struct basic_block_t *block);
+void merge_dummy_3_addrs(void);
+void merge_dummy_blocks(void);
+
 void print_three_addr(struct three_addr_t *ta);
+void print_transition_next_block(struct three_addr_t *next);
 void print_block(struct basic_block_t *block);
 void print_blocks(void);
+void print_block_parents(struct basic_block_t *block);
+void print_parent_blocks(void);
 void print_program(void);
+
 void init_cfg(void);
 
 #endif /* _CFG_H_ */
