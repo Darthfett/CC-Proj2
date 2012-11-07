@@ -488,6 +488,14 @@ statement_sequence : statement
             $1->cfg->last->last = $3->cfg->first->last;
         } else {
             // Not okay to merge blocks
+
+            // Update parents
+            struct parent_node_t *p = (struct parent_node_t*) malloc(sizeof(struct parent_node_t));
+            p->parent = $1->cfg->last;
+            p->next = $3->cfg->first->parents;
+            $3->cfg->first->parents = p;
+
+            // Chain block after sequence
             $1->cfg->last->last->next_b1 = $3->cfg->first;
         }
 
