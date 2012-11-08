@@ -139,27 +139,27 @@
 program : program_heading semicolon class_list DOT
 	{
 	
-	printf("program : program_heading semicolon class_list DOT \n");
+	// printf("program : program_heading semicolon class_list DOT \n");
 	$$ = (struct program_t*) malloc(sizeof(struct program_t));
 
 	program = $$;
 	$$->ph = $1;
 	$$->cl = $3;
 
-        printf("\n\n");
+        // printf("\n\n");
 	}
  ;
 
 program_heading : PROGRAM identifier
 	{
 	// Change our scope to be within this program
-	printf("program_heading : PROGRAM identifier \n");
+	// printf("program_heading : PROGRAM identifier \n");
 	$$ = (struct program_heading_t *) malloc(sizeof(struct program_heading_t));
 	$$->id = $2;
 	}
  | PROGRAM identifier LPAREN identifier_list RPAREN
 	{
-	printf("PROGRAM identifier LPAREN identifier_list RPAREN \n");
+	// printf("PROGRAM identifier LPAREN identifier_list RPAREN \n");
 
 	$$ = (struct program_heading_t *) malloc(sizeof(struct program_heading_t));
 	$$->id = $2;
@@ -169,14 +169,14 @@ program_heading : PROGRAM identifier
 
 identifier_list : identifier_list comma identifier
         {
-        printf("identifier_list : identifier_list comma identifier \n%s",yytext);
+        // printf("identifier_list : identifier_list comma identifier \n%s",yytext);
         $$ = (struct identifier_list_t*) malloc(sizeof(struct identifier_list_t));
         $$->next = $1;
         $$->id = $3;
         }
  | identifier
         {
-        printf("identifier_list : identifier \n");
+        // printf("identifier_list : identifier \n");
         $$ = (struct identifier_list_t*) malloc(sizeof(struct identifier_list_t));
         $$->next = NULL;
         $$->id = $1;
@@ -185,12 +185,12 @@ identifier_list : identifier_list comma identifier
 
 class_list : class_list class_identification PBEGIN class_block END
 	{
-        printf("UNUSED\n");
-	printf("class_list : class_list class_identification PBEGIN class_block END \n");
+        // printf("UNUSED\n");
+	// printf("class_list : class_list class_identification PBEGIN class_block END \n");
 	}
  | class_identification PBEGIN class_block END
 	{
-	printf("class_list : class_identification PBEGIN class_block END \n");
+	// printf("class_list : class_identification PBEGIN class_block END \n");
 	$$ = (struct class_list_t*) malloc(sizeof(struct class_list_t));
 
 	$$->next = NULL;
@@ -201,7 +201,7 @@ class_list : class_list class_identification PBEGIN class_block END
 
 class_identification : CLASS identifier
 	{
-	printf("class_identification : CLASS identifier \n");
+	// printf("class_identification : CLASS identifier \n");
 
 	$$ = (struct class_identification_t*) malloc(sizeof(struct class_identification_t));
         // TODO - Create class node
@@ -211,15 +211,15 @@ class_identification : CLASS identifier
 	}
 | CLASS identifier EXTENDS identifier
 	{
-        printf("UNUSED\n");
-	printf("class_identification : CLASS identifier EXTENDS identifier \n");
+        // printf("UNUSED\n");
+	// printf("class_identification : CLASS identifier EXTENDS identifier \n");
 
 	}
 ;
 
 class_block : variable_declaration_part func_declaration_list
 	{
-	printf("class_block : variable_declaration_part func_declaration_list \n");
+	// printf("class_block : variable_declaration_part func_declaration_list \n");
 	$$ = (struct class_block_t*) malloc(sizeof(struct class_block_t));
 
 	$$->vdl = $1;
@@ -229,13 +229,13 @@ class_block : variable_declaration_part func_declaration_list
 
 type_denoter : array_type
 	{
-        printf("UNUSED\n");
-	printf("type_denoter : array_type \n");
+        // printf("UNUSED\n");
+	// printf("type_denoter : array_type \n");
 	}
  | identifier
 	{
 	
-	printf("type_denoter : identifier \n");
+	// printf("type_denoter : identifier \n");
         $$ = (struct type_denoter_t*) malloc(sizeof(struct type_denoter_t));
         // TODO - determine if identifier is a class, or base type (e.g. integer or boolean)
 	// $$->type = ?;
@@ -244,21 +244,21 @@ type_denoter : array_type
 
 array_type : ARRAY LBRAC range RBRAC OF type_denoter
 	{
-        printf("UNUSED\n");
-	printf("array_type : ARRAY LBRAC range RBRAC OF type_denoter \n");
+        // printf("UNUSED\n");
+	// printf("array_type : ARRAY LBRAC range RBRAC OF type_denoter \n");
 	}
  ;
 
 range : unsigned_integer DOTDOT unsigned_integer
 	{
-        printf("UNUSED\n");
-	printf("range : unsigned_integer DOTDOT unsigned_integer\nValue1 = %i\nValue2 = %i\n",$1->ui,$3->ui);
+        // printf("UNUSED\n");
+	// printf("range : unsigned_integer DOTDOT unsigned_integer\nValue1 = %i\nValue2 = %i\n",$1->ui,$3->ui);
 	}
  ;
 
 variable_declaration_part : VAR variable_declaration_list semicolon
 	{
-	printf("variable_declaration_part : VAR variable_declaration_list semicolon \n");
+	// printf("variable_declaration_part : VAR variable_declaration_list semicolon \n");
         $$ = (struct variable_declaration_list_t*) malloc(sizeof(struct variable_declaration_list_t));
 
         // $$->vd = ?;
@@ -266,7 +266,7 @@ variable_declaration_part : VAR variable_declaration_list semicolon
 	}
  |
 	{
-	printf("variable_declaration_part :  \n");
+	// printf("variable_declaration_part :  \n");
         $$ = (struct variable_declaration_list_t*) malloc(sizeof(struct variable_declaration_list_t));
 
 	$$->vd = NULL;
@@ -276,7 +276,7 @@ variable_declaration_part : VAR variable_declaration_list semicolon
 
 variable_declaration_list : variable_declaration_list semicolon variable_declaration
 	{
-	printf("variable_declaration_list : variable_declaration_list semicolon variable_declaration \n");
+	// printf("variable_declaration_list : variable_declaration_list semicolon variable_declaration \n");
         $$ = (struct variable_declaration_list_t*) malloc(sizeof(struct variable_declaration_list_t));
 	$$->next = $1;
 
@@ -284,7 +284,7 @@ variable_declaration_list : variable_declaration_list semicolon variable_declara
 	}
  | variable_declaration
 	{
-	printf("variable_declaration_list : variable_declaration \n");
+	// printf("variable_declaration_list : variable_declaration \n");
         $$ = (struct variable_declaration_list_t*) malloc(sizeof(struct variable_declaration_list_t));
 	$$->next = NULL;
 	$$->vd = $1;
@@ -294,7 +294,7 @@ variable_declaration_list : variable_declaration_list semicolon variable_declara
 
 variable_declaration : identifier_list COLON type_denoter
 	{
-	printf("variable_declaration : identifier_list COLON type_denoter \n");
+	// printf("variable_declaration : identifier_list COLON type_denoter \n");
         $$ = (struct variable_declaration_t*) malloc(sizeof(struct variable_declaration_t));
 	$$->il = $1;
 	$$->tden = $3;
@@ -304,19 +304,19 @@ variable_declaration : identifier_list COLON type_denoter
 
 func_declaration_list : func_declaration_list semicolon function_declaration
 	{
-        printf("UNUSED\n");
-	printf("func_declaration_list : func_declaration_list semicolon function_declaration \n");
+        // printf("UNUSED\n");
+	// printf("func_declaration_list : func_declaration_list semicolon function_declaration \n");
 	}
  | function_declaration
 	{
-	printf("func_declaration_list : function_declaration \n");
+	// printf("func_declaration_list : function_declaration \n");
 	$$ = (struct func_declaration_list_t*) malloc(sizeof(struct func_declaration_list_t));
 	$$->next = NULL;
 	$$->fd = $1;
 	}
  |
 	{
-	printf("func_declaration_list :  \n");
+	// printf("func_declaration_list :  \n");
 	$$ = (struct func_declaration_list_t*) malloc(sizeof(struct func_declaration_list_t));
 
 	$$->next = NULL;
@@ -326,7 +326,7 @@ func_declaration_list : func_declaration_list semicolon function_declaration
 
 formal_parameter_list : LPAREN formal_parameter_section_list RPAREN 
 	{
-	printf("formal_parameter_list : LPAREN formal_parameter_section_list RPAREN  \n");
+	// printf("formal_parameter_list : LPAREN formal_parameter_section_list RPAREN  \n");
         $$ = (struct formal_parameter_section_list_t*) malloc(sizeof(struct formal_parameter_section_list_t));
         $$->fps = NULL;
         $$->next = $2;
@@ -334,14 +334,14 @@ formal_parameter_list : LPAREN formal_parameter_section_list RPAREN
 ;
 formal_parameter_section_list : formal_parameter_section_list semicolon formal_parameter_section
 	{
-	printf("formal_parameter_section_list : formal_parameter_section_list semicolon formal_parameter_section \n");
+	// printf("formal_parameter_section_list : formal_parameter_section_list semicolon formal_parameter_section \n");
         $$ = (struct formal_parameter_section_list_t*) malloc(sizeof(struct formal_parameter_section_list_t));
 	$$->next = $1;
 	$$->fps = $3;
 	}
  | formal_parameter_section
 	{
-	printf("formal_parameter_section_list : formal_parameter_section \n");
+	// printf("formal_parameter_section_list : formal_parameter_section \n");
         $$ = (struct formal_parameter_section_list_t*) malloc(sizeof(struct formal_parameter_section_list_t));
 	$$->next = NULL;
 	$$->fps = $1;
@@ -350,19 +350,19 @@ formal_parameter_section_list : formal_parameter_section_list semicolon formal_p
 
 formal_parameter_section : value_parameter_specification
 	{
-	printf("formal_parameter_section : value_parameter_specification \n");
+	// printf("formal_parameter_section : value_parameter_specification \n");
         $$ = $1;
 	}
  | variable_parameter_specification
  	{
-	printf("formal_parameter_section : variable_parameter_specification \n");
+	// printf("formal_parameter_section : variable_parameter_specification \n");
         $$ = $1;
  	}
  ;
 
 value_parameter_specification : identifier_list COLON identifier
 	{
-	printf("value_parameter_specification : identifier_list COLON identifier \n");
+	// printf("value_parameter_specification : identifier_list COLON identifier \n");
         $$ = (struct formal_parameter_section_t*) malloc(sizeof(struct formal_parameter_section_t));
         $$->il = $1;
 	$$->id = $3;
@@ -372,7 +372,7 @@ value_parameter_specification : identifier_list COLON identifier
 
 variable_parameter_specification : VAR identifier_list COLON identifier
 	{
-	printf("variable_parameter_specification : VAR identifier_list COLON identifier \n");
+	// printf("variable_parameter_specification : VAR identifier_list COLON identifier \n");
         $$ = (struct formal_parameter_section_t*) malloc(sizeof(struct formal_parameter_section_t));
         $$->il = $2;
         $$->id = $4;
@@ -383,7 +383,7 @@ variable_parameter_specification : VAR identifier_list COLON identifier
 
 function_declaration : function_identification semicolon function_block
 	{
-	printf("function_declaration : function_identification semicolon function_block \n");
+	// printf("function_declaration : function_identification semicolon function_block \n");
         $$ = (struct function_declaration_t*) malloc(sizeof(struct function_declaration_t));
         $$->fh = NULL;
         $$->fb = $3;
@@ -392,7 +392,7 @@ function_declaration : function_identification semicolon function_block
 	}
  | function_heading semicolon function_block
 	{
-	printf("function_declaration : function_heading semicolon function_block \n");
+	// printf("function_declaration : function_heading semicolon function_block \n");
         $$ = (struct function_declaration_t*) malloc(sizeof(struct function_declaration_t));
         $$->fh = $1;
         $$->fb = $3;
@@ -403,7 +403,7 @@ function_declaration : function_identification semicolon function_block
 
 function_heading : FUNCTION identifier COLON result_type
 	{
-	printf("function_heading : FUNCTION identifier COLON result_type \n");
+	// printf("function_heading : FUNCTION identifier COLON result_type \n");
         $$ = (struct function_heading_t*) malloc(sizeof(struct function_heading_t));
         $$->id = $2;
         $$->res = $4;
@@ -411,7 +411,7 @@ function_heading : FUNCTION identifier COLON result_type
 	}
  | FUNCTION identifier formal_parameter_list COLON result_type
 	{
-	printf("function_heading : FUNCTION identifier formal_parameter_list COLON result_type \n");
+	// printf("function_heading : FUNCTION identifier formal_parameter_list COLON result_type \n");
         $$ = (struct function_heading_t*) malloc(sizeof(struct function_heading_t));
         $$->id = $2;
         $$->res = $5;
@@ -421,21 +421,21 @@ function_heading : FUNCTION identifier COLON result_type
 
 result_type : identifier
 	{
-	printf("result_type : identifier \n");
+	// printf("result_type : identifier \n");
         $$ = $1;
 	}
  ;
 
 function_identification : FUNCTION identifier
 	{
-	printf("function_identification : FUNCTION identifier \n");
+	// printf("function_identification : FUNCTION identifier \n");
         $$ = $2;
 	}
 ;
 
 function_block : variable_declaration_part statement_part
 	{
-	printf("function_block : variable_declaration_part statement_part \n");
+	// printf("function_block : variable_declaration_part statement_part \n");
         $$ = (struct function_block_t*) malloc(sizeof(struct function_block_t));
         $$->vdl = $1;
         $$->ss = $2;
@@ -446,14 +446,14 @@ function_block : variable_declaration_part statement_part
 
 statement_part : compound_statement
 	{
-	printf("statement_part : compound_statement \n");
+	// printf("statement_part : compound_statement \n");
         $$ = $1;
 	}
  ;
 
 compound_statement : PBEGIN statement_sequence END
 	{
-	printf("compound_statement : PBEGIN statement_sequence END \n");
+	// printf("compound_statement : PBEGIN statement_sequence END \n");
         $$ = $2;
         $$->cfg = $2->cfg;
 	}
@@ -461,7 +461,7 @@ compound_statement : PBEGIN statement_sequence END
 
 statement_sequence : statement
 	{
-	printf("statement_sequence : statement \n");
+	// printf("statement_sequence : statement \n");
         $$ = (struct statement_sequence_t*) malloc(sizeof(struct statement_sequence_t));
         $$->s = $1;
         $$->next = NULL;
@@ -469,7 +469,7 @@ statement_sequence : statement
 	}
  | statement_sequence semicolon statement
 	{
-	printf("statement_sequence : statement_sequence semicolon statement \n");
+	// printf("statement_sequence : statement_sequence semicolon statement \n");
         $$ = (struct statement_sequence_t*) malloc(sizeof(struct statement_sequence_t));
         $$->s = $3;
         $$->next = $1;
@@ -485,6 +485,12 @@ statement_sequence : statement
             $1->cfg->last->last->next = $3->cfg->first->first;
 
             // Update last pointer
+
+            // Update parents
+            struct parent_node_t *p = (struct parent_node_t*) malloc(sizeof(struct parent_node_t));
+            p->parent = $1->cfg->last;
+            p->next = $3->cfg->first->parents;
+            $3->cfg->first->parents = p;
             $1->cfg->last->last = $3->cfg->first->last;
         } else {
             // Not okay to merge blocks
@@ -504,7 +510,7 @@ statement_sequence : statement
 
 statement : assignment_statement
 	{
-	printf("statement : assignment_statement \n");
+	// printf("statement : assignment_statement \n");
         $$ = (struct statement_t*) malloc(sizeof(struct statement_t));
         $$->data.as = $1;
         $$->type = STATEMENT_T_ASSIGNMENT;
@@ -514,7 +520,7 @@ statement : assignment_statement
 	}
  | compound_statement
 	{
-	printf("statement : compound_statement \n");
+	// printf("statement : compound_statement \n");
         $$ = (struct statement_t*) malloc(sizeof(struct statement_t));
         $$->data.ss = $1;
         $$->type = STATEMENT_T_SEQUENCE;
@@ -524,7 +530,7 @@ statement : assignment_statement
 	}
  | if_statement
 	{
-	printf("statement : if_statement \n");
+	// printf("statement : if_statement \n");
         $$ = (struct statement_t*) malloc(sizeof(struct statement_t));
         $$->data.is = $1;
         $$->type = STATEMENT_T_IF;
@@ -534,7 +540,7 @@ statement : assignment_statement
 	}
  | while_statement
 	{
-	printf("statement : while_statement \n");
+	// printf("statement : while_statement \n");
         $$ = (struct statement_t*) malloc(sizeof(struct statement_t));
         $$->data.ws = $1;
         $$->type = STATEMENT_T_WHILE;
@@ -544,14 +550,14 @@ statement : assignment_statement
 	}
  | print_statement
         {
-        printf("UNUSED\n");
-	printf("statement : print_statement \n");
+        // printf("UNUSED\n");
+	// printf("statement : print_statement \n");
         }
  ;
 
 while_statement : WHILE boolean_expression DO statement
 	{
-	printf("while_statement : WHILE boolean_expression DO statement \n");
+	// printf("while_statement : WHILE boolean_expression DO statement \n");
         $$ = (struct while_statement_t*) malloc(sizeof(struct while_statement_t));
         $$->e = $2;
         $$->s = $4;
@@ -634,7 +640,7 @@ while_statement : WHILE boolean_expression DO statement
 
 if_statement : IF boolean_expression THEN statement ELSE statement
 	{
-	printf("if_statement : IF boolean_expression THEN statement ELSE statement \n");
+	// printf("if_statement : IF boolean_expression THEN statement ELSE statement \n");
         $$ = (struct if_statement_t*) malloc(sizeof(struct if_statement_t));
         $$->e = $2;
         $$->s1 = $4;
@@ -713,7 +719,7 @@ if_statement : IF boolean_expression THEN statement ELSE statement
 
 assignment_statement : variable_access ASSIGNMENT expression
 	{
-	printf("assignment_statement : variable_access ASSIGNMENT expression \n");
+	// printf("assignment_statement : variable_access ASSIGNMENT expression \n");
         $$ = (struct assignment_statement_t*) malloc(sizeof(struct assignment_statement_t));
         $$->va = $1;
         $$->e = $3;
@@ -733,21 +739,21 @@ assignment_statement : variable_access ASSIGNMENT expression
 	}
  | variable_access ASSIGNMENT object_instantiation
 	{
-        printf("UNUSED\n");
-	printf("assignment_statement : variable_access ASSIGNMENT object_instantiation \n");
+        // printf("UNUSED\n");
+	// printf("assignment_statement : variable_access ASSIGNMENT object_instantiation \n");
 	}
  ;
 
 object_instantiation: NEW identifier
 	{
-	printf("object_instantiation: NEW identifier \n");
+	// printf("object_instantiation: NEW identifier \n");
         $$ = (struct object_instantiation_t*) malloc(sizeof(struct object_instantiation_t));
         $$->id = $2;
         $$->apl = NULL;
 	}
  | NEW identifier params
 	{
-	printf("object_instantiation: NEW identifier params \n");
+	// printf("object_instantiation: NEW identifier params \n");
         $$ = (struct object_instantiation_t*) malloc(sizeof(struct object_instantiation_t));
         $$->id = $2;
         $$->apl = $3;
@@ -756,14 +762,14 @@ object_instantiation: NEW identifier
 
 print_statement : PRINT variable_access
         {
-        printf("UNUSED\n");
-	printf("print_statement : PRINT variable_access \n");
+        // printf("UNUSED\n");
+	// printf("print_statement : PRINT variable_access \n");
         }
 ;
 
 variable_access : identifier
 	{
-	printf("variable_access : identifier \n");
+	// printf("variable_access : identifier \n");
         $$ = (struct variable_access_t*) malloc(sizeof(struct variable_access_t));
         $$->type = VARIABLE_ACCESS_T_IDENTIFIER;
         $$->data.id = $1;
@@ -773,24 +779,24 @@ variable_access : identifier
 	}
  | indexed_variable
 	{
-        printf("UNUSED\n");
-	printf("variable_access : indexed_variable \n");
+        // printf("UNUSED\n");
+	// printf("variable_access : indexed_variable \n");
 	}
  | attribute_designator
 	{
-        printf("UNUSED\n");
-	printf("variable_access : attribute_designator \n");
+        // printf("UNUSED\n");
+	// printf("variable_access : attribute_designator \n");
 	}
  | method_designator
 	{
-        printf("UNUSED\n");
-	printf("variable_access : method_designator \n");
+        // printf("UNUSED\n");
+	// printf("variable_access : method_designator \n");
 	}
  ;
 
 indexed_variable : variable_access LBRAC index_expression_list RBRAC
 	{
-	printf("indexed_variable : variable_access LBRAC index_expression_list RBRAC \n");
+	// printf("indexed_variable : variable_access LBRAC index_expression_list RBRAC \n");
         $$ = (struct indexed_variable_t*) malloc(sizeof(struct indexed_variable_t));
         $$->va = $1;
         $$->iel = $3;
@@ -800,7 +806,7 @@ indexed_variable : variable_access LBRAC index_expression_list RBRAC
 
 index_expression_list : index_expression_list comma index_expression
 	{
-	printf("index_expression_list : index_expression_list comma index_expression \n");
+	// printf("index_expression_list : index_expression_list comma index_expression \n");
         $$ = (struct index_expression_list_t*) malloc(sizeof(struct index_expression_list_t));
         $$->e = $3;
         $$->next = $1;
@@ -808,7 +814,7 @@ index_expression_list : index_expression_list comma index_expression
 	}
  | index_expression
 	{
-	printf("index_expression_list : index_expression \n");
+	// printf("index_expression_list : index_expression \n");
         $$ = (struct index_expression_list_t*) malloc(sizeof(struct index_expression_list_t));
         $$->e = $1;
         $$->next = NULL;
@@ -818,29 +824,29 @@ index_expression_list : index_expression_list comma index_expression
 
 index_expression : expression
 	{
-        printf("UNUSED\n");
-	printf("index_expression : expression \n");
+        // printf("UNUSED\n");
+	// printf("index_expression : expression \n");
         $$ = $1;
 	} ;
 
 attribute_designator : variable_access DOT identifier
 	{
-        printf("UNUSED\n");
-	printf("attribute_designator : variable_access DOT identifier \n");
+        // printf("UNUSED\n");
+	// printf("attribute_designator : variable_access DOT identifier \n");
 	}
 ;
 
 method_designator: variable_access DOT function_designator
 	{
-        printf("UNUSED\n");
-	printf("method_designator: variable_access DOT function_designator \n");
+        // printf("UNUSED\n");
+	// printf("method_designator: variable_access DOT function_designator \n");
 	}
  ;
 
 
 params : LPAREN actual_parameter_list RPAREN 
 	{
-	printf("params : LPAREN actual_parameter_list RPAREN  \n");
+	// printf("params : LPAREN actual_parameter_list RPAREN  \n");
         $$ = (struct actual_parameter_list_t*) malloc(sizeof(struct actual_parameter_list_t));
         $$->ap = NULL;
         $$->next = $2;
@@ -849,14 +855,14 @@ params : LPAREN actual_parameter_list RPAREN
 
 actual_parameter_list : actual_parameter_list comma actual_parameter
 	{
-	printf("actual_parameter_list : actual_parameter_list comma actual_parameter \n");
+	// printf("actual_parameter_list : actual_parameter_list comma actual_parameter \n");
         $$ = (struct actual_parameter_list_t*) malloc(sizeof(struct actual_parameter_list_t));
         $$->ap = $3;
         $$->next = $1;
 	}
  | actual_parameter 
 	{
-	printf("actual_parameter_list : actual_parameter \n");
+	// printf("actual_parameter_list : actual_parameter \n");
         $$->ap = $1;
         $$->next = NULL;
 	}
@@ -864,7 +870,7 @@ actual_parameter_list : actual_parameter_list comma actual_parameter
 
 actual_parameter : expression
 	{
-	printf("actual_parameter : expression \n");
+	// printf("actual_parameter : expression \n");
         $$ = (struct actual_parameter_t*) malloc(sizeof(struct actual_parameter_t));
         $$->e1 = $1;
         $$->e2 = NULL;
@@ -872,7 +878,7 @@ actual_parameter : expression
 	}
  | expression COLON expression
 	{
-	printf("actual_parameter : expression COLON expression \n");
+	// printf("actual_parameter : expression COLON expression \n");
         $$ = (struct actual_parameter_t*) malloc(sizeof(struct actual_parameter_t));
         $$->e1 = $1;
         $$->e2 = $3;
@@ -880,7 +886,7 @@ actual_parameter : expression
 	}
  | expression COLON expression COLON expression
 	{
-	printf("actual_parameter : expression COLON expression COLON expression \n");
+	// printf("actual_parameter : expression COLON expression COLON expression \n");
         $$ = (struct actual_parameter_t*) malloc(sizeof(struct actual_parameter_t));
         $$->e1 = $1;
         $$->e2 = $3;
@@ -890,13 +896,13 @@ actual_parameter : expression
 
 boolean_expression : expression
 	{
-	printf("boolean_expression : expression \n");
+	// printf("boolean_expression : expression \n");
         $$ = $1;
 	} ;
 
 expression : simple_expression
 	{
-	printf("expression : simple_expression \n");
+	// printf("expression : simple_expression \n");
         $$ = (struct expression_t*) malloc(sizeof(struct expression_t));
         $$->se1 = $1;
         $$->relop = 0;
@@ -907,7 +913,7 @@ expression : simple_expression
 	}
  | simple_expression relop simple_expression
 	{
-	printf("expression : simple_expression relop simple_expression \n");
+	// printf("expression : simple_expression relop simple_expression \n");
         $$ = (struct expression_t*) malloc(sizeof(struct expression_t));
         $$->se1 = $1;
         $$->relop = $2;
@@ -938,7 +944,7 @@ expression : simple_expression
 
 simple_expression : term
 	{
-	printf("simple_expression : term \n");
+	// printf("simple_expression : term \n");
         $$ = (struct simple_expression_t*) malloc(sizeof(struct simple_expression_t));
         $$->t = $1;
         $$->addop = 0;
@@ -949,7 +955,7 @@ simple_expression : term
 	}
  | simple_expression addop term
 	{
-	printf("simple_expression : simple_expression addop term \n");
+	// printf("simple_expression : simple_expression addop term \n");
 
         $$ = (struct simple_expression_t*) malloc(sizeof(struct simple_expression_t));
         $$->t = $3;
@@ -981,7 +987,7 @@ simple_expression : term
 
 term : factor
 	{
-	printf("term : factor \n");
+	// printf("term : factor \n");
         $$ = (struct term_t*) malloc(sizeof(struct term_t));
         $$->f = $1;
         $$->mulop = 0;
@@ -992,7 +998,7 @@ term : factor
 	}
  | term mulop factor
 	{
-	printf("term : term mulop factor \n");
+	// printf("term : term mulop factor \n");
         $$ = (struct term_t*) malloc(sizeof(struct term_t));
         $$->f = $3;
         $$->mulop = $2;
@@ -1023,13 +1029,13 @@ term : factor
 
 sign : PLUS
 	{
-	printf("sign : PLUS \n");
+	// printf("sign : PLUS \n");
         $$ = (int*) malloc(sizeof(int));
         *$$ = OP_PLUS;
 	}
  | MINUS
 	{
-	printf("sign : MINUS \n");
+	// printf("sign : MINUS \n");
         $$ = (int*) malloc(sizeof(int));
         *$$ = OP_MINUS;
 	}
@@ -1037,7 +1043,7 @@ sign : PLUS
 
 factor : sign factor
 	{
-	printf("factor : sign factor\n");
+	// printf("factor : sign factor\n");
         $$ = (struct factor_t*) malloc(sizeof(struct factor_t));
         $$->type = FACTOR_T_SIGNFACTOR;
         $$->data.f.sign = $1;
@@ -1066,7 +1072,7 @@ factor : sign factor
 	}
  | primary 
 	{
-	printf("factor : primary\n");
+	// printf("factor : primary\n");
         $$ = (struct factor_t*) malloc(sizeof(struct factor_t));
         $$->type = FACTOR_T_PRIMARY;
         $$->data.p = $1;
@@ -1078,7 +1084,7 @@ factor : sign factor
 
 primary : variable_access
 	{
-	printf("primary : variable_access\n");
+	// printf("primary : variable_access\n");
         $$ = (struct primary_t*) malloc(sizeof(struct primary_t));
         $$->type = PRIMARY_T_VARIABLE_ACCESS;
         $$->data.va = $1;
@@ -1104,7 +1110,7 @@ primary : variable_access
 	}
  | unsigned_constant
 	{
-	printf("primary : | unsigned_constant\n");
+	// printf("primary : | unsigned_constant\n");
         $$ = (struct primary_t*) malloc(sizeof(struct primary_t));
         $$->type = PRIMARY_T_UNSIGNED_CONSTANT;
         $$->data.un = $1;
@@ -1133,12 +1139,12 @@ primary : variable_access
 	}
  | function_designator
 	{
-        printf("UNUSED\n");
-	printf("primary : | function_designator\n");
+        // printf("UNUSED\n");
+	// printf("primary : | function_designator\n");
 	}
  | LPAREN expression RPAREN
 	{
-	printf("primary : | LPAREN expression RPAREN\n");
+	// printf("primary : | LPAREN expression RPAREN\n");
         $$ = (struct primary_t*) malloc(sizeof(struct primary_t));
         $$->type = PRIMARY_T_EXPRESSION;
         $$->data.e = $2;
@@ -1148,7 +1154,7 @@ primary : variable_access
 	}
  | NOT primary
 	{
-	printf("primary :  | NOT primary\n");
+	// printf("primary :  | NOT primary\n");
         $$ = (struct primary_t*) malloc(sizeof(struct primary_t));
         $$->type = PRIMARY_T_PRIMARY;
         $$->data.p.next = $2;
@@ -1174,20 +1180,20 @@ primary : variable_access
 
 unsigned_constant : unsigned_number
 	{
-	printf("unsigned_constant : unsigned_number\n");
+	// printf("unsigned_constant : unsigned_number\n");
         $$ = $1;
 	}
  ;
 
 unsigned_number : unsigned_integer 
 {
-	printf("unsigned_number : unsigned_integer\n");
+	// printf("unsigned_number : unsigned_integer\n");
         $$ = $1;
 };
 
 unsigned_integer : DIGSEQ
 	{
-	printf("unsigned_integer : DIGSEQ\nval = %s\n",yytext);
+	// printf("unsigned_integer : DIGSEQ\nval = %s\n",yytext);
 	$$ = (struct unsigned_number_t*) malloc (sizeof(struct unsigned_number_t));
 	$$->ui = atoi(yytext);
 	}
@@ -1196,7 +1202,7 @@ unsigned_integer : DIGSEQ
 /* functions with no params will be handled by plain identifier */
 function_designator : identifier params
 	{
-	printf("function_designator : identifier params\n");
+	// printf("function_designator : identifier params\n");
         $$ = (struct function_designator_t*) malloc(sizeof(struct function_designator_t));
         $$->id = $1;
         $$->apl = $2;
@@ -1205,78 +1211,78 @@ function_designator : identifier params
 
 addop: PLUS
 	{
-	printf("addop: PLUS\n");
+	// printf("addop: PLUS\n");
         $$ = OP_PLUS;
 	}
  | MINUS
 	{
-	printf("addop: | MINUS\n");
+	// printf("addop: | MINUS\n");
         $$ = OP_MINUS;
 	}
  | OR
 	{
-	printf("addop: | OR\n");
+	// printf("addop: | OR\n");
         $$ = OP_OR;
 	}
  ;
 
 mulop : STAR
 	{
-	printf("mulop : STAR\n");
+	// printf("mulop : STAR\n");
         $$ = OP_STAR;
 	}
  | SLASH
 	{
-	printf("mulop :  | SLASH\n");
+	// printf("mulop :  | SLASH\n");
         $$ = OP_SLASH;
 	}
  | MOD
 	{
-	printf("mulop :  | MOD\n");
+	// printf("mulop :  | MOD\n");
         $$ = OP_MOD;
 	}
  | AND
 	{
-	printf("mulop :  | AND\n");
+	// printf("mulop :  | AND\n");
         $$ = OP_AND;
 	}
  ;
 
 relop : EQUAL
 	{
-	printf("relop : EQUAL\n");
+	// printf("relop : EQUAL\n");
         $$ = OP_EQUAL;
 	}
  | NOTEQUAL
 	{
-	printf("relop : | NOTEQUAL\n");
+	// printf("relop : | NOTEQUAL\n");
         $$ = OP_NOTEQUAL;
 	}
  | LT
 	{
-	printf("relop : | LT\n");
+	// printf("relop : | LT\n");
         $$ = OP_LT;
 	}
  | GT
 	{
-	printf("relop : | GT\n");
+	// printf("relop : | GT\n");
         $$ = OP_GT;
 	}
  | LE
 	{
-	printf("relop : | LE\n");
+	// printf("relop : | LE\n");
         $$ = OP_LE;
 	}
  | GE
 	{
-	printf("relop :  | GE\n");
+	// printf("relop :  | GE\n");
         $$ = OP_GE;
 	}
  ;
 
 identifier : IDENTIFIER
 	{
-	printf("identifier : IDENTIFIER\nid = %s\n",yytext);
+	// printf("identifier : IDENTIFIER\nid = %s\n",yytext);
 	$$ = (char*) malloc((strlen(yytext) + 1));
 	strcpy($$, yytext);
 	}
@@ -1284,7 +1290,7 @@ identifier : IDENTIFIER
 
 semicolon : SEMICOLON
 	{
-	printf("semicolon : SEMICOLON\n");
+	// printf("semicolon : SEMICOLON\n");
 
 	}
  ;
@@ -1292,7 +1298,7 @@ semicolon : SEMICOLON
 comma : COMMA
 	{
 
-	printf("comma : COMMA\n");
+	// printf("comma : COMMA\n");
 	}
  ;
 

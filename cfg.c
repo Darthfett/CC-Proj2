@@ -1,3 +1,5 @@
+#include <ctype.h>
+
 #include "cfg.h"
 #include "symtab.h"
 
@@ -9,9 +11,41 @@ struct basic_block_t **seen_blocks;
 int seen_blocks_count = 0;
 int seen_blocks_size = 20;
 
+int *seen_vars;
+int seen_vars_count = 0;
+int seen_vars_size = 20;
+
 /*
  * Traversal functions
  */
+
+int seen_var(int var)
+{
+    int i;
+    for (i = 0; i < seen_vars_count; i++) {
+        if (seen_vars[i] == var) {
+            return 1;
+        }
+    }
+    return 0;
+}
+
+void mark_var_seen(int var)
+{
+    /* Check if there is room for the var */
+    if (seen_vars_size == seen_vars_count) {
+        /* Not enough room to add vars -- double the size */
+        int *new_seen_vars = (int*) malloc(sizeof(int) * seen_vars_size * 2);
+        memcpy(new_seen_vars, seen_vars, seen_vars_size);
+        free(seen_vars);
+        seen_vars = new_seen_vars;
+        seen_vars_size *= 2;
+    }
+
+    /* Add var to seen vars */
+    seen_vars[seen_vars_count] = var;
+    seen_vars_count++;
+}
 
 int seen_block(struct basic_block_t *block)
 {
@@ -97,6 +131,11 @@ int is_dummy_block(struct basic_block_t *block)
     if (block == NULL) {
         return 0;
     }
+
+    if (! seen_block(block)) {
+        return 1;
+    }
+
     struct three_addr_t *next = block->first;
     while (next != NULL) {
         if (next->type != THREE_ADDR_T_DUMMY) {
@@ -178,6 +217,7 @@ void merge_dummy_parents(struct basic_block_t *block)
     while (p != NULL) {
         if (is_dummy_block(p->parent)) {
             struct parent_node_t *dummy_parents = get_nondummy_parents(p->parent);
+
             // Merge dummy parents with new parents
             if (dummy_parents != NULL) {
                 struct parent_node_t *last = dummy_parents;
@@ -194,8 +234,9 @@ void merge_dummy_parents(struct basic_block_t *block)
             struct parent_node_t *p2 = (struct parent_node_t*) malloc(sizeof(struct parent_node_t));
             p2->parent = p->parent;
             p2->next = new_parents;
-            new_parents = p;
+            new_parents = p2;
         }
+        p = p->next;
     }
     block->parents = new_parents;
 }
@@ -226,14 +267,95 @@ void merge_dummy_blocks(void)
 {
     int i;
     for (i = 0; i < seen_blocks_count; i++) {
-        merge_dummy_parents(seen_blocks[i]);
         merge_dummy_children(seen_blocks[i]);
+    }
+    for (i = 0; i < seen_blocks_count; i++) {
+        merge_dummy_parents(seen_blocks[i]);
     }
 }
 
 /*
  * Print functions
  */
+
+int is_int(char *name)
+{
+    char *iter = name;
+    while (*iter != '\0') {
+        if (! isdigit(*iter)) {
+            return 0;
+        }
+        iter++;
+    }
+    return 1;
+}
+
+void print_hashval(int hashval)
+{
+    if (seen_var(hashval)) {
+        return;
+    }
+    mark_var_seen(hashval);
+    char *str = get_hashval_name(hashval);
+    if (!is_int(str)) {
+        printf("%s\n", str);
+    }
+}
+
+void print_vars_in_three_addr(struct three_addr_t *ta)
+{
+    switch(ta->type) {
+    case THREE_ADDR_T_ASSIGN:
+        switch(ta->op) {
+        case OP_PLUS:
+        case OP_MINUS:
+        case OP_EQUAL:
+        case OP_NOTEQUAL:
+        case OP_LT:
+        case OP_GT:
+        case OP_LE:
+        case OP_GE:
+        case OP_SLASH:
+        case OP_STAR:
+        case OP_MOD:
+        case OP_OR:
+        case OP_AND:
+            print_hashval(ta->op2);
+        case OP_ASSIGNMENT:
+        case OP_NOT:
+            print_hashval(ta->LHS);
+            print_hashval(ta->op1);
+            break;
+        default:
+            break;
+        }
+        break;
+    case THREE_ADDR_T_BRANCH:
+        print_hashval(ta->op1);
+        break;
+    case THREE_ADDR_T_DUMMY:
+        break;
+    default:
+        break;
+    }
+}
+
+void print_vars_seen_in_block(struct basic_block_t *block)
+{
+    struct three_addr_t *next = block->first;
+    while (next != NULL) {
+        print_vars_in_three_addr(next);
+        next = next->next;
+    }
+}
+
+void print_vars_seen(void)
+{
+    int i;
+    for (i = 0; i < seen_blocks_count; i++) {
+        print_vars_seen_in_block(seen_blocks[i]);
+    }
+}
 
 void print_three_addr(struct three_addr_t *ta)
 {
@@ -378,7 +500,6 @@ void print_block_parents(struct basic_block_t *block)
 
 void print_parent_blocks(void)
 {
-    printf("\n");
     int i;
     for (i = 0; i < seen_blocks_count; i++) {
         print_block_parents(seen_blocks[i]);
@@ -393,11 +514,6 @@ void print_program(void)
     // Get a list of all seen blocks
     traverse_block(block);
     
-    /* DEBUG */
-    print_parent_blocks();
-    return;
-    /* END DEBUG */
-    
     // Fix up dummy 3addr and blocks
     merge_dummy_3_addrs();
     merge_dummy_blocks();
@@ -406,10 +522,31 @@ void print_program(void)
     clear_blocks_seen();
     traverse_block(block);
 
+    // Print variables used in code
+
+    printf("\n\
+####################\n\
+   Variables used\n\
+####################\n");
+
+    print_vars_seen();
+
     // Generate 3-address code
+
+    printf("\n\
+####################\n\
+ Three Address Code\n\
+####################\n");
+
     print_blocks();
 
     // Print blocks and their parents
+
+    printf("\n\
+####################\n\
+    Parent blocks\n\
+####################\n");
+
     print_parent_blocks();
 }
 
@@ -420,4 +557,5 @@ void print_program(void)
 void init_cfg(void)
 {
     seen_blocks = (struct basic_block_t**) malloc(sizeof(struct basic_block_t*) * seen_blocks_size);
+    seen_vars = (int*) malloc(sizeof(int) * seen_vars_size);
 }

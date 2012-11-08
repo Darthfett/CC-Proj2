@@ -487,7 +487,6 @@ struct cfg_t {
 
 char *new_type(void);
 int makekey(char* lexeme, int max_hashkeys);
-char * tolower(char *s);
 void print_tabs(int numOfTabs);
 char *inttostring(int value);
 char *longtostring(long value);

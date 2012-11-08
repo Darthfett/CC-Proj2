@@ -59,6 +59,8 @@ int makekey(char* lexeme, int max_hashkeys)
  * Converts a string to lowercase
  * ----------------------------------------------------------------------- 
  */
+
+/*
 char * tolower(char *s)
 {
   int len;
@@ -70,10 +72,10 @@ char * tolower(char *s)
   else
     len = 0;
 
-  new = (char *) malloc(len + 1); /* +1 for '\0' */
+  new = (char *) malloc(len + 1); // +1 for '\0'
 
   for (i = 0; i < len; i++) {
-    /* if an uppercase character */
+    // if an uppercase character
     if (s[i] >= 65 && s[i] <=  90)
       new[i] = s[i] + 32;
     else
@@ -84,8 +86,7 @@ char * tolower(char *s)
 
   return new;
 }
-
-
+*/
 
 /* ----------------------------------------------------------------------- 
  * Prints the specified amount of tabs
