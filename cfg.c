@@ -56,8 +56,10 @@ int get_const_var_val(int var)
     return 9001;
 }
 
-void mark_var_const(struct three_addr_t *LHS)
+void mark_var_const(struct three_addr_t *var_three_addr)
 {
+    struct three_addr_t *LHS = (struct three_addr_t*) malloc(sizeof(struct three_addr_t));
+    *LHS = *var_three_addr;
     if (is_const_var(LHS->LHS)) {
         int i;
         for (i = 0; i < const_vars_count; i++) {
@@ -294,9 +296,12 @@ int is_unary_op(int op)
     return 0;
 }
 
-int perform_operation(int op, int op1, int op2)
+int perform_operation(int op, int op1, int op2, int is_branch)
 {
     op1 = get_const_var_val(op1);
+    if (is_branch) {
+        return op1;
+    }
     if (! is_unary_op(op)) {
         op2 = get_const_var_val(op2);
     }
@@ -352,23 +357,19 @@ void eval_constants_in_block(struct basic_block_t *block)
 {
     struct three_addr_t *next = block->first;
     while (next != NULL) {
-        if (next->type == THREE_ADDR_T_ASSIGN) {
-            printf("Check 3 addr: ");
-            print_three_addr(next);
-            if (is_const_var(next->op1)) {
-                if (is_unary_op(next->op) || is_const_var(next->op2)) {
-                    next->op1 = perform_operation(next->op, next->op1, next->op2);
-                    next->type = THREE_ADDR_T_ASSIGN;
-                    mark_var_const(next);
-                    if (is_temp_var(next->LHS)) {
-                        // *next = *(next->next);
-                        // continue;
+        if (is_const_var(next->op1)) {
+            if (next->type == THREE_ADDR_T_BRANCH || is_unary_op(next->op) || is_const_var(next->op2)) {
+                next->op1 = perform_operation(next->op, next->op1, next->op2, next->type == THREE_ADDR_T_BRANCH);
+                char *int_repr = (char*) malloc(sizeof(char) * 20);
+                snprintf(int_repr, 20, "%d", next->op1);
+                next->op1 = get_name_hashval(int_repr);
+                next->op = OP_ASSIGNMENT;
+                mark_var_const(next);
+                if (is_temp_var(next->LHS)) {
+                    if (next->next != NULL) {
+                        *next = *(next->next);
+                        continue;
                     }
-                }
-            } else {
-                printf("Const op1 %s: %d\n", get_hashval_name(next->op1), is_const_var(next->op1));
-                if (! is_unary_op(next->op)) {
-                    printf("Const op2 %s: %d\n", get_hashval_name(next->op2), is_const_var(next->op2));
                 }
             }
         }
@@ -382,6 +383,7 @@ void eval_constants(void)
     int i;
     for (i = 0; i < seen_blocks_count; i++) {
         eval_constants_in_block(seen_blocks[i]);
+        clear_const_vars();
     }
 }
 
@@ -739,13 +741,15 @@ void print_program(void)
     traverse_block(block);
     
     // Fix up dummy 3addr and blocks
-    eval_constants();
     merge_dummy_3_addrs();
     merge_dummy_blocks();
 
     // Re-traverse which will no longer list dummy blocks
     clear_blocks_seen();
     traverse_block(block);
+
+    // Constant evaluation
+    eval_constants();
 
     // Print variables used in code
 
