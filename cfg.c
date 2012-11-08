@@ -126,6 +126,18 @@ void traverse_block(struct basic_block_t *block)
  * Block dummy functions
  */
 
+int is_int(char *name)
+{
+    char *iter = name;
+    while (*iter != '\0') {
+        if (! isdigit(*iter)) {
+            return 0;
+        }
+        iter++;
+    }
+    return 1;
+}
+
 int is_dummy_block(struct basic_block_t *block)
 {
     if (block == NULL) {
@@ -277,18 +289,6 @@ void merge_dummy_blocks(void)
 /*
  * Print functions
  */
-
-int is_int(char *name)
-{
-    char *iter = name;
-    while (*iter != '\0') {
-        if (! isdigit(*iter)) {
-            return 0;
-        }
-        iter++;
-    }
-    return 1;
-}
 
 void print_hashval(int hashval)
 {

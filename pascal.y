@@ -930,6 +930,10 @@ expression : simple_expression
         cmp->LHS = get_name_hashval(lhs);
         cmp->op1 = $1->cfg->last->last->LHS;
         cmp->op2 = $3->cfg->last->last->LHS;
+        if (is_int(get_hashval_name(cmp->op1)) ||
+            is_int(get_hashval_name(cmp->op2))) {
+            printf("Possible constant elimination between %s and %s\n", get_hashval_name(cmp->op1), get_hashval_name(cmp->op2));
+        }
         cmp->op = $2;
         cmp->next = NULL;
         cmp->next_b1 = NULL;
@@ -973,6 +977,10 @@ simple_expression : term
         cmp->LHS = get_name_hashval(lhs);
         cmp->op1 = $1->cfg->last->last->LHS;
         cmp->op2 = $3->cfg->last->last->LHS;
+        if (is_int(get_hashval_name(cmp->op1)) ||
+            is_int(get_hashval_name(cmp->op2))) {
+            printf("Possible constant elimination between %s and %s\n", get_hashval_name(cmp->op1), get_hashval_name(cmp->op2));
+        }
         cmp->op = $2;
         cmp->next = NULL;
         cmp->next_b1 = NULL;
@@ -1015,6 +1023,10 @@ term : factor
         cmp->LHS = get_name_hashval(lhs);
         cmp->op1 = $1->cfg->last->last->LHS;
         cmp->op2 = $3->cfg->last->last->LHS;
+        if (is_int(get_hashval_name(cmp->op1)) ||
+            is_int(get_hashval_name(cmp->op2))) {
+            printf("Possible constant elimination between %s and %s\n", get_hashval_name(cmp->op1), get_hashval_name(cmp->op2));
+        }
         cmp->op = $2;
         cmp->next = NULL;
         cmp->next_b1 = NULL;
@@ -1061,6 +1073,10 @@ factor : sign factor
         cmp->LHS = get_name_hashval(lhs);
         cmp->op1 = $2->cfg->last->last->LHS;
         cmp->op2 = get_name_hashval("-1");
+        if (is_int(get_hashval_name(cmp->op1)) ||
+            is_int(get_hashval_name(cmp->op2))) {
+            printf("Possible constant elimination between %s and %s\n", get_hashval_name(cmp->op1), get_hashval_name(cmp->op2));
+        }
         cmp->op = STAR;
         cmp->next = NULL;
         cmp->next_b1 = NULL;
