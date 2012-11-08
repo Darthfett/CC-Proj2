@@ -498,6 +498,49 @@ void print_block_parents(struct basic_block_t *block)
     printf("\n");
 }
 
+void print_block_children(struct basic_block_t *block)
+{
+    struct three_addr_t *next = block->first;
+    int first = 1;
+    printf("Children of %d: ", block->unique_id);
+    while (next != NULL) {
+        if (next->type == THREE_ADDR_T_BRANCH) {
+            if (next->next_b1 != NULL) {
+                if (! first) {
+                    printf(", ");
+                }
+                first = 0;
+                printf("%d", next->next_b1->unique_id);
+            }
+            if (next->next_b2 != NULL) {
+                if (! first) {
+                    printf(", ");
+                }
+                first = 0;
+                printf("%d", next->next_b2->unique_id);
+            }
+        } else if (next->next == NULL) {
+            if (next->next_b1 != NULL) {
+                if (! first) {
+                    printf(", ");
+                }
+                first = 0;
+                printf("%d", next->next_b1->unique_id);
+            }
+        }
+        next = next->next;
+    }
+    printf("\n");
+}
+
+void print_children_blocks(void)
+{
+    int i;
+    for (i = 0; i < seen_blocks_count; i++) {
+        print_block_children(seen_blocks[i]);
+    }
+}
+
 void print_parent_blocks(void)
 {
     int i;
@@ -548,6 +591,15 @@ void print_program(void)
 ####################\n");
 
     print_parent_blocks();
+
+    // Print blocks and their children
+
+    printf("\n\
+####################\n\
+   Children blocks\n\
+####################\n");
+
+    print_children_blocks();
 }
 
 /*
