@@ -15,9 +15,79 @@ int *seen_vars;
 int seen_vars_count = 0;
 int seen_vars_size = 20;
 
+struct three_addr_t **const_vars;
+int const_vars_count = 0;
+int const_vars_size = 20;
+
 /*
  * Traversal functions
  */
+
+int is_const_var(int var)
+{
+    char *name = get_hashval_name(var);
+    if (is_int(name)) {
+        return 1;
+    }
+
+    int i;
+    for (i = 0; i < const_vars_count; i++) {
+        if (const_vars[i]->LHS == var) {
+            return 1;
+        }
+    }
+    return 0;
+}
+
+int get_const_var_val(int var)
+{
+    char *name = get_hashval_name(var);
+    if (is_int(name)) {
+        return atoi(name);
+    }
+    int i;
+    for (i = 0; i < const_vars_count; i++) {
+        if (const_vars[i]->LHS == var) {
+            return get_const_var_val(const_vars[i]->op1);
+        }
+    }
+    printf("ERROR: Var %d %s marked const, but not in list\n", var, name);
+    error_flag = 1;
+    return 9001;
+}
+
+void mark_var_const(struct three_addr_t *LHS)
+{
+    if (is_const_var(LHS->LHS)) {
+        int i;
+        for (i = 0; i < const_vars_count; i++) {
+            if (const_vars[i]->LHS == LHS->LHS) {
+                const_vars[i] = LHS;
+                return;
+            }
+        }
+    }
+    /* Check if there is room for the var */
+    if (const_vars_size == const_vars_count) {
+        /* Not enough room to add vars -- double the size */
+        struct three_addr_t **new_const_vars = (struct three_addr_t**) malloc(sizeof(struct three_addr_t*) * const_vars_size * 2);
+        memcpy(new_const_vars, const_vars, sizeof(struct three_addr_t*) * const_vars_size);
+        free(const_vars);
+        const_vars = new_const_vars;
+        const_vars_size *= 2;
+    }
+
+    /* Add var to const vars */
+    const_vars[const_vars_count] = LHS;
+    const_vars_count++;
+}
+
+void clear_const_vars(void)
+{
+    free(const_vars);
+    const_vars_count = 0;
+    const_vars = (struct three_addr_t**) malloc(sizeof(struct three_addr_t*) * const_vars_size);
+}
 
 int seen_var(int var)
 {
@@ -36,7 +106,7 @@ void mark_var_seen(int var)
     if (seen_vars_size == seen_vars_count) {
         /* Not enough room to add vars -- double the size */
         int *new_seen_vars = (int*) malloc(sizeof(int) * seen_vars_size * 2);
-        memcpy(new_seen_vars, seen_vars, seen_vars_size);
+        memcpy(new_seen_vars, seen_vars, sizeof(int) * seen_vars_size);
         free(seen_vars);
         seen_vars = new_seen_vars;
         seen_vars_size *= 2;
@@ -64,7 +134,7 @@ void mark_block_seen(struct basic_block_t *block)
     if (seen_blocks_size == seen_blocks_count) {
         /* Not enough room to add block -- double the size */
         struct basic_block_t **new_seen_blocks = (struct basic_block_t**) malloc(sizeof(struct basic_block_t*) * seen_blocks_size * 2);
-        memcpy(new_seen_blocks, seen_blocks, seen_blocks_size);
+        memcpy(new_seen_blocks, seen_blocks, sizeof(struct basic_block_t*) *seen_blocks_size);
         free(seen_blocks);
         seen_blocks = new_seen_blocks;
         seen_blocks_size *= 2;
@@ -203,6 +273,117 @@ struct parent_node_t* get_nondummy_parents(struct basic_block_t *block)
 /*
  * Merging functions
  */
+
+int is_const(int hashval)
+{
+    if (is_int(get_hashval_name(hashval))) {
+        return 1;
+    }
+    if (is_const_var(hashval)) {
+        return 1;
+    }
+    return 0;
+}
+
+int is_unary_op(int op)
+{
+    if (op == OP_ASSIGNMENT ||
+        op == OP_NOT) {
+        return 1;
+    }
+    return 0;
+}
+
+int perform_operation(int op, int op1, int op2)
+{
+    op1 = get_const_var_val(op1);
+    if (! is_unary_op(op)) {
+        op2 = get_const_var_val(op2);
+    }
+    switch(op) {
+    case OP_ASSIGNMENT:
+        return op1;
+    case OP_PLUS:
+        return op1 + op2;
+    case OP_MINUS:
+        return op1 - op2;
+    case OP_EQUAL:
+        return op1 == op2;
+    case OP_NOTEQUAL:
+        return op1 != op2;
+    case OP_LT:
+        return op1 < op2;
+    case OP_GT:
+        return op1 > op2;
+    case OP_LE:
+        return op1 <= op2;
+    case OP_GE:
+        return op1 >= op2;
+    case OP_NOT:
+        return ! op1;
+    case OP_OR:
+        return op1 || op2;
+    case OP_STAR:
+        return op1 * op2;
+    case OP_SLASH:
+        return op1 / op2;
+    case OP_MOD:
+        return op1 % op2;
+    case OP_AND:
+        return op1 && op2;
+    default:
+        break;
+    }
+    printf("ERROR: Invalid operation op %d\n", op);
+    error_flag = 1;
+    return 9001;
+}
+
+int is_temp_var(int hashval)
+{
+    char *name = get_hashval_name(hashval);
+    if (strncmp(name, "__usr_t", strlen("__usr_t")) == 0) {
+        return 1;
+    }
+    return 0;
+}
+
+void eval_constants_in_block(struct basic_block_t *block)
+{
+    struct three_addr_t *next = block->first;
+    while (next != NULL) {
+        if (next->type == THREE_ADDR_T_ASSIGN) {
+            printf("Check 3 addr: ");
+            print_three_addr(next);
+            if (is_const_var(next->op1)) {
+                if (is_unary_op(next->op) || is_const_var(next->op2)) {
+                    next->op1 = perform_operation(next->op, next->op1, next->op2);
+                    next->type = THREE_ADDR_T_ASSIGN;
+                    mark_var_const(next);
+                    if (is_temp_var(next->LHS)) {
+                        // *next = *(next->next);
+                        // continue;
+                    }
+                }
+            } else {
+                printf("Const op1 %s: %d\n", get_hashval_name(next->op1), is_const_var(next->op1));
+                if (! is_unary_op(next->op)) {
+                    printf("Const op2 %s: %d\n", get_hashval_name(next->op2), is_const_var(next->op2));
+                }
+            }
+        }
+        next = next->next;
+    }
+
+}
+
+void eval_constants(void)
+{
+    int i;
+    for (i = 0; i < seen_blocks_count; i++) {
+        eval_constants_in_block(seen_blocks[i]);
+    }
+}
 
 void merge_dummy_3_addr(struct basic_block_t *block)
 {
@@ -558,6 +739,7 @@ void print_program(void)
     traverse_block(block);
     
     // Fix up dummy 3addr and blocks
+    eval_constants();
     merge_dummy_3_addrs();
     merge_dummy_blocks();
 
@@ -610,4 +792,5 @@ void init_cfg(void)
 {
     seen_blocks = (struct basic_block_t**) malloc(sizeof(struct basic_block_t*) * seen_blocks_size);
     seen_vars = (int*) malloc(sizeof(int) * seen_vars_size);
+    const_vars = (struct three_addr_t**) malloc(sizeof(struct three_addr_t*) * const_vars_size);
 }
