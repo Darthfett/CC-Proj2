@@ -20,6 +20,7 @@ int is_commutative(int op);
 int is_const(int hashval);
 int is_unary_op(int op);
 int perform_operation(int op, int op1, int op2, int is_branch);
+int is_temp_var(int hashval);
 void merge_dummy_3_addr(struct basic_block_t *block);
 void merge_dummy_parents(struct basic_block_t *block);
 void merge_dummy_children(struct basic_block_t *block);

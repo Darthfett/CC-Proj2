@@ -56,16 +56,16 @@ void set_value_number(int hashval, struct three_addr_t *ta)
     value_numbers[hashval] = ta;
 }
 
-void value_number_three_addr(struct three_addr_t *ta)
+struct three_addr_t* value_number_three_addr(struct three_addr_t *ta)
 {
     if (ta->type == THREE_ADDR_T_DUMMY) {
-        return;
+        return ta->next;
     }
     if (ta->type == THREE_ADDR_T_BRANCH) {
-        return;
+        return ta->next;
     }
     if (ta->op == OP_ASSIGNMENT) {
-        return;
+        return ta->next;
     }
     char *hash_str;
     if (is_unary_op(ta->op)) {
@@ -86,7 +86,18 @@ void value_number_three_addr(struct three_addr_t *ta)
     } else {
         ta->op = OP_ASSIGNMENT;
         ta->op1 = prev->LHS;
+        if (is_temp_var(ta->LHS)) {
+            if (ta->next->op1 == ta->LHS) {
+                ta->next->op1 = ta->op1;
+            }
+            if (ta->next->op2 == ta->LHS) {
+                ta->next->op2 = ta->op1;
+            }
+            *ta = *(ta->next);
+            return ta;
+        }
     }
+    return ta->next;
 }
 
 int is_const_var(int var)
@@ -155,6 +166,13 @@ void clear_const_vars(void)
     free(const_vars);
     const_vars_count = 0;
     const_vars = (struct three_addr_t**) malloc(sizeof(struct three_addr_t*) * const_vars_size);
+}
+
+void clear_seen_vars(void)
+{
+    free(seen_vars);
+    seen_vars_count = 0;
+    seen_vars = (int*) malloc(sizeof(int) * seen_vars_size);
 }
 
 int seen_var(int var)
@@ -493,8 +511,7 @@ void do_value_numbering_in_block(struct basic_block_t *block)
 {
     struct three_addr_t *next = block->first;
     while (next != NULL) {
-        value_number_three_addr(next);
-        next = next->next;
+        next = value_number_three_addr(next);
     }
 }
 
@@ -659,6 +676,7 @@ void print_vars_seen(void)
     for (i = 0; i < seen_blocks_count; i++) {
         print_vars_seen_in_block(seen_blocks[i]);
     }
+    clear_seen_vars();
 }
 
 void print_three_addr(struct three_addr_t *ta)
