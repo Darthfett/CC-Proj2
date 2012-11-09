@@ -19,9 +19,75 @@ struct three_addr_t **const_vars;
 int const_vars_count = 0;
 int const_vars_size = 20;
 
+struct three_addr_t **value_numbers;
+int value_numbers_size = 20;
+
 /*
  * Traversal functions
  */
+
+struct three_addr_t* get_value_number(int hashval)
+{
+    if (hashval < value_numbers_size)
+        return value_numbers[hashval];
+    else
+        return NULL;
+}
+
+void set_value_number(int hashval, struct three_addr_t *ta)
+{
+    int i;
+    /* Check if there is room for the var */
+    if (value_numbers_size <= hashval) {
+        /* Not enough room to add vars -- double the size */
+        struct three_addr_t **new_value_numbers = (struct three_addr_t**) malloc(sizeof(struct three_addr_t*) * hashval * 2);
+
+        for (i = 0; i < hashval * 2; i++) {
+            new_value_numbers[i] = NULL;
+        }
+
+        memcpy(new_value_numbers, value_numbers, sizeof(struct three_addr_t*) * value_numbers_size);
+        free(value_numbers);
+        value_numbers = new_value_numbers;
+        value_numbers_size = hashval * 2;
+    }
+
+    /* Add var to seen vars */
+    value_numbers[hashval] = ta;
+}
+
+void value_number_three_addr(struct three_addr_t *ta)
+{
+    if (ta->type == THREE_ADDR_T_DUMMY) {
+        return;
+    }
+    if (ta->type == THREE_ADDR_T_BRANCH) {
+        return;
+    }
+    if (ta->op == OP_ASSIGNMENT) {
+        return;
+    }
+    char *hash_str;
+    if (is_unary_op(ta->op)) {
+        hash_str = (char*) malloc(sizeof(char) * 20);
+        snprintf(hash_str, 20, "%d %d", ta->op, ta->op1);
+    } else {
+        hash_str = (char*) malloc(sizeof(char) * 30);
+        if (ta->op1 <= ta->op2 || ! is_commutative(ta->op)) {
+            snprintf(hash_str, 30, "%d %d %d", ta->op1, ta->op, ta->op2);
+        } else {
+            snprintf(hash_str, 30, "%d %d %d", ta->op2, ta->op, ta->op1);
+        }
+    }
+
+    struct three_addr_t *prev = get_value_number(get_name_hashval(hash_str));
+    if (prev == NULL) {
+        set_value_number(get_name_hashval(hash_str), ta);
+    } else {
+        ta->op = OP_ASSIGNMENT;
+        ta->op1 = prev->LHS;
+    }
+}
 
 int is_const_var(int var)
 {
@@ -276,6 +342,30 @@ struct parent_node_t* get_nondummy_parents(struct basic_block_t *block)
  * Merging functions
  */
 
+int is_commutative(int op)
+{
+    switch(op) {
+    case OP_PLUS:
+    case OP_EQUAL:
+    case OP_NOTEQUAL:
+    case OP_OR:
+    case OP_STAR:
+    case OP_AND:
+        return 1;
+    case OP_MINUS:
+    case OP_LT:
+    case OP_GT:
+    case OP_LE:
+    case OP_GE:
+    case OP_SLASH:
+    case OP_MOD:
+        return 0;
+    default:
+        printf("ERROR: Operator %d has no known commutativity\n", op);
+        return -1;
+    }
+}
+
 int is_const(int hashval)
 {
     if (is_int(get_hashval_name(hashval))) {
@@ -385,6 +475,37 @@ void eval_constants(void)
         eval_constants_in_block(seen_blocks[i]);
         clear_const_vars();
     }
+}
+
+void clear_value_numbers(void)
+{
+    int i;
+    free(value_numbers);
+    value_numbers = (struct three_addr_t**) malloc(sizeof(struct three_addr_t*) * value_numbers_size);
+
+    for (i = 0; i < value_numbers_size; i++) {
+        value_numbers[i] = NULL;
+    }
+
+}
+
+void do_value_numbering_in_block(struct basic_block_t *block)
+{
+    struct three_addr_t *next = block->first;
+    while (next != NULL) {
+        value_number_three_addr(next);
+        next = next->next;
+    }
+}
+
+void do_value_numbering(void)
+{
+    int i;
+    for(i = 0; i < seen_blocks_count; i++) {
+        do_value_numbering_in_block(seen_blocks[i]);
+        clear_value_numbers();
+    }
+
 }
 
 void merge_dummy_3_addr(struct basic_block_t *block)
@@ -786,6 +907,32 @@ void print_program(void)
 ####################\n");
 
     print_children_blocks();
+
+    printf("Value numbering\n");
+
+    out_line_no = 1;
+    do_value_numbering();
+
+    // Print variables used in code
+
+    printf("\n\
+####################\n\
+   Variables used\n\
+with value numbering\n\
+####################\n");
+
+    print_vars_seen();
+
+    // Generate 3-address code
+
+    printf("\n\
+####################\n\
+ Three Address Code\n\
+with value numbering\n\
+####################\n");
+
+    print_blocks();
+
 }
 
 /*
@@ -794,7 +941,12 @@ void print_program(void)
 
 void init_cfg(void)
 {
+    int i;
     seen_blocks = (struct basic_block_t**) malloc(sizeof(struct basic_block_t*) * seen_blocks_size);
     seen_vars = (int*) malloc(sizeof(int) * seen_vars_size);
     const_vars = (struct three_addr_t**) malloc(sizeof(struct three_addr_t*) * const_vars_size);
+    value_numbers = (struct three_addr_t**) malloc(sizeof(struct three_addr_t*) * value_numbers_size);
+    for (i = 0; i < value_numbers_size; i++) {
+        value_numbers[i] = NULL;
+    }
 }

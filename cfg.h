@@ -16,6 +16,10 @@ int is_dummy_block(struct basic_block_t *block);
 struct basic_block_t* get_child_nondummy_block(struct basic_block_t *block);
 struct parent_node_t* get_nondummy_parents(struct basic_block_t *block);
 
+int is_commutative(int op);
+int is_const(int hashval);
+int is_unary_op(int op);
+int perform_operation(int op, int op1, int op2, int is_branch);
 void merge_dummy_3_addr(struct basic_block_t *block);
 void merge_dummy_parents(struct basic_block_t *block);
 void merge_dummy_children(struct basic_block_t *block);

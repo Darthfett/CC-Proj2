@@ -8,6 +8,10 @@ BEGIN
 FUNCTION testIfThenElse;
 BEGIN   
    aa := 0;
+   bb := aa + cc * 2;
+   bb := aa + cc * 2;
+   aa := aa + cc * 2;
+   aa := 3;
    cc := 2;
 
    if aa = 0 THEN
